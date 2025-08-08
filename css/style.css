@@ -1173,3 +1173,117 @@ body.theme-soft {
             object-fit: cover;
             border-radius: 8px;
         }
+
+        /* ===== Service card v2 (image-backed) ===== */
+        .service-card {
+            position: relative;
+            isolation: isolate;
+            border-radius: 16px;
+            overflow: hidden;
+            height: 280px;
+            /* было: background: #1f1f1f; — убираем, чтобы не перекрывал фон-картинку */
+            background: transparent;
+            border: 1px solid #343434;
+            transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+            cursor: pointer;
+        }
+
+        /* Фон-картинка — ДОЛЖЕН быть над фоном карточки */
+        .service-card::before {
+            content: "";
+            position: absolute; inset: 0;
+            background: var(--bg, linear-gradient(135deg,#222,#2c2c2c));
+            background-size: cover; background-position: center;
+            filter: brightness(.78) saturate(1.05);
+            transition: transform .35s ease, filter .18s ease;
+            z-index: 0;              /* было -2 */
+        }
+
+        /* Градиентный кант поверх фона */
+        .service-card::after {
+            content: "";
+            position: absolute; inset: 0;
+            border-radius: inherit;
+            padding: 1px;
+            background: linear-gradient(135deg, rgba(255,173,0,.45), rgba(95,169,255,.35));
+            -webkit-mask:
+                    linear-gradient(#000 0 0) content-box,
+                    linear-gradient(#000 0 0);
+            -webkit-mask-composite: xor; mask-composite: exclude;
+            z-index: 1;              /* было -1 */
+            opacity: .85;
+        }
+
+        /* Контентные блоки выше псевдоэлементов */
+        .service-card .glass { z-index: 2; position: absolute; left:12px; right:12px; bottom:12px; }
+        .service-card .s-badge { z-index: 2; position: absolute; top:10px; left:10px; }
+        .service-card .shine  { z-index: 3; position: absolute; inset: -40% -40% auto auto; }
+
+        .service-card:hover {
+            transform: translateY(-6px);
+            border-color: transparent;
+            box-shadow: 0 18px 44px rgba(0,0,0,.35);
+        }
+        .service-card:hover::before { filter: brightness(.92) saturate(1.1) contrast(1.02); transform: scale(1.04); }
+
+        /* нижняя «стеклянная» плашка */
+        .service-card .glass {
+            position: absolute; left: 12px; right: 12px; bottom: 12px;
+            background: rgba(18,18,18,.72);
+            backdrop-filter: blur(6px);
+            border: 1px solid rgba(255,255,255,.06);
+            border-radius: 12px;
+            padding: .9rem .95rem;
+        }
+
+        .service-card h3 {
+            margin: 0 0 .35rem;
+            font-size: 1.15rem;
+            color: #fff;
+        }
+
+        .service-card p {
+            margin: 0;
+            color: #cfcfcf;
+            font-size: .95rem;
+            line-height: 1.35;
+        }
+
+        /* «чипсы» быстрых особенностей */
+        .s-chips {
+            display: flex; gap: .35rem; flex-wrap: wrap; margin-top: .5rem;
+        }
+        .s-chip {
+            font-size: .8rem; line-height: 1;
+            padding: .35rem .55rem;
+            border: 1px solid #3a3a3a;
+            border-radius: 999px;
+            background: rgba(0,0,0,.35);
+            color: #e6e6e6;
+        }
+
+        /* маленькая пиктограмма/счетчик сверху слева */
+        .s-badge {
+            position: absolute; top: 10px; left: 10px;
+            padding: .35rem .6rem; font-size: .8rem;
+            border-radius: 999px;
+            background: rgba(20,20,20,.65);
+            border: 1px solid #3a3a3a;
+        }
+
+        /* лёгкий «блик» при ховере */
+        .service-card .shine {
+            content:""; position:absolute; inset:-40% -40% auto auto;
+            width: 60%; height: 60%;
+            background: radial-gradient( circle at 100% 0%, rgba(255,255,255,.12), transparent 55%);
+            transform: rotate(15deg);
+            pointer-events: none;
+            transition: opacity .25s ease, transform .25s ease;
+            opacity: 0;
+        }
+        .service-card:hover .shine { opacity: 1; transform: rotate(0deg); }
+
+        /* уважение к reduced motion */
+        @media (prefers-reduced-motion: reduce) {
+            .service-card, .service-card::before, .shine { transition: none; }
+        }

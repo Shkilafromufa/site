@@ -1,7 +1,8 @@
 <?php
 require __DIR__.'/db.php';
+header('Content-Type: application/json');
 
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') { http_response_code(405); exit; }
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') { http_response_code(405); echo json_encode(['error'=>'method_not_allowed']); exit; }
 
 session_start();
 if (empty($_SESSION['admin'])) { http_response_code(403); echo json_encode(['error'=>'forbidden']); exit; }
@@ -45,4 +46,5 @@ $rel = 'uploads/services/' . $service_id . '/' . $fname;
 $stmt = $db->prepare('INSERT INTO service_images (service_id, path, alt) VALUES (?,?,?)');
 $stmt->execute([$service_id, $rel, $_POST['alt'] ?? '']);
 
+/* вернуть JSON с id новой картинки и путём */
 echo json_encode(['status'=>'ok','path'=>$rel,'id'=>$db->lastInsertId()]);

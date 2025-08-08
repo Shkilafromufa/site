@@ -5,37 +5,59 @@ header('Content-Type: application/json');
 $method = $_SERVER['REQUEST_METHOD'];
 $db = get_db();
 
-session_start(); // <-- ДО проверки $_SESSION
+session_start();
 
 if ($method === 'GET') {
+    // Детальная услуга
     if (isset($_GET['id'])) {
         $id = (int)$_GET['id'];
+
         $stmt = $db->prepare('SELECT * FROM services WHERE id = ?');
         $stmt->execute([$id]);
         $s = $stmt->fetch();
 
         if (!$s) { http_response_code(404); echo json_encode(['error'=>'not_found']); exit; }
 
-        // грузим картинки ТОЛЬКО если услуга найдена
+        // Картинки
         $imgs = $db->prepare('SELECT id, path, alt FROM service_images WHERE service_id = ? ORDER BY id DESC');
         $imgs->execute([$id]);
         $s['images'] = $imgs->fetchAll() ?: [];
 
+        // Особенности
         $s['features'] = json_decode($s['features'], true) ?: [];
+
         echo json_encode($s);
         exit;
     }
 
-    $stmt = $db->query('SELECT * FROM services ORDER BY id DESC');
+    // Список услуг с cover (обложкой)
+    // Работает и в MySQL, и в SQLite
+    $sql = "
+        SELECT s.*,
+               (
+                 SELECT path
+                 FROM service_images
+                 WHERE service_id = s.id
+                 ORDER BY id DESC
+                 LIMIT 1
+               ) AS cover
+        FROM services s
+        ORDER BY s.id DESC
+    ";
+    $stmt = $db->query($sql);
     $services = $stmt->fetchAll();
-    $services = array_map(function($s){
+
+    // Декодируем features
+    foreach ($services as &$s) {
         $s['features'] = json_decode($s['features'], true) ?: [];
-        return $s;
-    }, $services);
+    }
+    unset($s);
+
     echo json_encode($services);
     exit;
 }
 
+// Всё, что ниже — требует админ-сессии
 if (empty($_SESSION['admin'])) {
     http_response_code(403);
     echo json_encode(['error' => 'forbidden']);
@@ -45,6 +67,7 @@ if (empty($_SESSION['admin'])) {
 switch ($method) {
     case 'POST':
         $data = json_decode(file_get_contents('php://input'), true) ?? [];
+
         $stmt = $db->prepare('INSERT INTO services (name, description, features) VALUES (?,?,?)');
         $stmt->execute([
             $data['name'] ?? '',
@@ -52,9 +75,9 @@ switch ($method) {
             json_encode($data['features'] ?? [])
         ]);
 
-        $newId = (int)$db->lastInsertId();     // <-- получаем id
+        $newId = (int)$db->lastInsertId();
         http_response_code(201);
-        echo json_encode(['id' => $newId]);    // <-- возвращаем id (ожидает фронт)
+        echo json_encode(['id' => $newId]);
         break;
 
     case 'DELETE':

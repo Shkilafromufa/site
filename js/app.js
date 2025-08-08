@@ -32,31 +32,80 @@ async function loadServices() {
   const container = document.getElementById('services-container');
   container.innerHTML = '';
 
+  // ПУЛ конкарренси, чтобы не убить сервер доп.запросами
+  const MAX_PARALLEL = 4;
+  let inFlight = 0, queue = [];
+
+  function withLimit(fn) {
+    return new Promise((resolve) => {
+      const run = async () => {
+        inFlight++;
+        try { resolve(await fn()); }
+        finally {
+          inFlight--;
+          if (queue.length) queue.shift()();
+        }
+      };
+      (inFlight < MAX_PARALLEL) ? run() : queue.push(run);
+    });
+  }
+
   services.forEach((s, i) => {
     const el = document.createElement('article');
-    el.className = 'card card-link';
+    el.className = 'service-card';
     el.setAttribute('role', 'button');
     el.setAttribute('tabindex', '0');
     el.dataset.id = s.id;
+
+    // базовая верстка
     el.innerHTML = `
-      <div class="card-icon-placeholder">${i + 1}</div>
-      <h3>${s.name}</h3>
-      <p>${s.description || ''}</p>
+      <span class="s-badge">#${i+1}</span>
+      <div class="shine"></div>
+      <div class="glass">
+        <h3>${escapeHtml(s.name)}</h3>
+        <p>${escapeHtml((s.description || '').slice(0, 110))}${(s.description && s.description.length > 110) ? '…' : ''}</p>
+        <div class="s-chips" data-chips></div>
+      </div>
     `;
+
+    // пока нет обложки — приятный градиент-заглушка (чтобы не прыгало)
+    const fallback = `linear-gradient(135deg, rgba(255,173,0,.18), rgba(95,169,255,.18)), linear-gradient(135deg, #2a2a2a, #1e1e1e)`;
+    el.style.setProperty('--bg', fallback);
+
+    // чипсы из первых 2-3 фич
+    const chips = el.querySelector('[data-chips]');
+    const feats = (s.features || []).slice(0, 3);
+    if (feats.length) {
+      chips.innerHTML = feats.map(f => `<span class="s-chip">${escapeHtml(f)}</span>`).join('');
+    }
+
+    // клики/клавиатура
+    el.addEventListener('click', () => openService(+s.id));
+    el.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openService(+s.id); }
+    });
+
     container.appendChild(el);
+
+    // Если API уже отдаёт cover, ставим сразу:
+    if (s.cover) {
+      el.style.setProperty('--bg', `url("${s.cover}")`);
+      return;
+    }
+
+    // Иначе — подтянем превьюшку услуги (первая картинка) аккуратно:
+    withLimit(async () => {
+      try {
+        const rr = await fetch(`api/services.php?id=${s.id}`);
+        if (!rr.ok) return;
+        const full = await rr.json();
+        const firstImg = (full.images && full.images[0]?.path) || null;
+        if (firstImg) el.style.setProperty('--bg', `url("${firstImg}")`);
+      } catch(_) {}
+    });
   });
 
-  // Клик по карточке
-  container.addEventListener('click', onCardClick);
-  // Клавиатура (Enter/Space)
-  container.addEventListener('keydown', (e) => {
-    const card = e.target.closest('.card-link');
-    if (!card) return;
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault();
-      openService(+card.dataset.id);
-    }
-  });
+  // делегирование кликов уже есть в твоём коде — можно убрать onCardClick
 }
 
 function onCardClick(e){
