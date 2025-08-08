@@ -1,5 +1,8 @@
 // Navigation
 function showPage(pageId) {
+  if (pageId === 'services' && location.hash) {
+    history.replaceState(null, '', location.pathname + location.search);
+  }
   document.querySelectorAll('.page-section').forEach(p => p.classList.remove('active'));
   const sec = document.getElementById(pageId);
   if (!sec) { console.warn('No section #'+pageId); return; }
@@ -711,7 +714,15 @@ document.addEventListener('click', (e) => {
 });
 function handleHashOpen(){
   const m = location.hash.match(/^#service\/(\d+)$/);
-  if (m) openService(+m[1]);
+  if (m) {
+    openService(+m[1]);
+    return;
+  }
+  // если ушли со страницы услуги (хэш не совпал) — показываем список
+  const active = document.querySelector('.page-section.active');
+  if (active && active.id === 'service') {
+    showPage('services');
+  }
 }
 function escapeHtml(str='') {
   return String(str).replace(/[&<>"']/g, m => ({
