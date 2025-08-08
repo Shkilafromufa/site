@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ПрессФорм - Изготовление и ремонт пресс-форм</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/cleaned.css">
     
 </head>
 <body>
@@ -296,29 +296,53 @@
     </footer>
 
     <!-- Admin Toggle Button -->
-    <button class="admin-toggle" id="contactToggle" aria-controls="contactDrawer" aria-expanded="false">✉️</button>
-    <!-- Backdrop -->
-    <div class="drawer-backdrop" id="drawerBackdrop" hidden></div>
+    <!-- Floating Action Button (замена старой admin-toggle) -->
+    <button class="fab-contact" id="contactToggle" aria-controls="contactDrawer" aria-expanded="false" aria-label="Открыть форму связи">
+        <!-- иконка-конверт -->
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M4 6h16a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1Z" stroke="currentColor" stroke-width="1.5"/>
+            <path d="m4 7 8 6 8-6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span class="fab-label">Сделать заказ</span>
+    </button>
 
-    <!-- Contact Drawer -->
-    <aside class="contact-drawer" id="contactDrawer" aria-hidden="true">
+    <!-- Бэкдроп -->
+    <div class="drawer-backdrop" id="drawerBackdrop"></div>
+
+    <!-- Современный drawer -->
+    <aside class="contact-drawer v2" id="contactDrawer" aria-hidden="true" role="dialog" aria-modal="true">
         <header class="drawer-header">
-            <h3>Оставить заявку</h3>
-            <button class="drawer-close" id="drawerClose" aria-label="Закрыть">×</button>
+            <div class="drawer-title">
+                <h3>Оставить заявку</h3>
+                <p>Ответим в течение рабочего дня</p>
+            </div>
+            <button class="icon-btn" id="drawerClose" aria-label="Закрыть">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="M6 6l12 12M18 6 6 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                </svg>
+            </button>
         </header>
 
-        <form class="contact-form drawer-form" id="drawerContactForm">
-            <input type="text" name="name" placeholder="Ваше имя" required>
-            <input type="tel" name="phone" placeholder="Телефон" required>
-            <input type="email" name="email" placeholder="Email" required>
-            <textarea name="message" rows="5" placeholder="Сообщение" required></textarea>
+        <form class="drawer-form" id="drawerContactForm">
+            <div class="fld"><input class="ui-input" type="text" name="name" placeholder="Ваше имя" required></div>
+            <div class="fld"><input class="ui-input" type="tel" name="phone" placeholder="Телефон" required></div>
+            <div class="fld"><input class="ui-input" type="email" name="email" placeholder="Email" required></div>
+            <div class="fld"><textarea class="ui-input" name="message" rows="5" placeholder="Сообщение" required></textarea></div>
 
-            <label class="file-label">
-                📎 Прикрепить файл (3D-модель, чертежи)
-                <input type="file" name="file" accept=".dwg,.step,.igs,.pdf,.stp,.dxf,.zip,.rar,.7z,.pdf">
+            <!-- дропзона -->
+            <label class="file-drop" id="fileDrop">
+                <input type="file" name="file" accept=".dwg,.step,.igs,.stp,.dxf,.zip,.rar,.7z,.pdf" hidden>
+                <div class="file-drop-inner">
+                    <div class="file-ic">📎</div>
+                    <div>
+                        <div class="file-main">Перетащите файл сюда</div>
+                        <div class="file-sub">или нажмите, чтобы выбрать (3D-модель, чертежи)</div>
+                    </div>
+                </div>
+                <div class="file-name" id="fileName"></div>
             </label>
 
-            <button type="submit" class="btn accent">Отправить</button>
+            <button type="submit" class="btn-primary">Отправить</button>
         </form>
 
         <div class="drawer-meta">
@@ -329,20 +353,45 @@
     </aside>
 
 
+
     <!-- Popup -->
     <div class="popup" id="popup">
         <div class="popup-content">
             <button class="popup-close" onclick="closePopup()">×</button>
             <h3>Связаться с нами</h3>
             <div class="social-links">
-                <a href="https://t.me/" target="_blank" class="social-link">Telegram</a>
-                <a href="https://wa.me/" target="_blank" class="social-link">WhatsApp</a>
-                <a href="https://vk.com/" target="_blank" class="social-link">VK</a>
+                <a class="social-link social-link--vk" href="https://vk.com/yourpage" target="_blank" rel="noopener">
+  <span class="brand-ic">
+    <!-- VK SVG -->
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path fill="currentColor" d="M12.87 17h-1.55c-3.36 0-5.2-2.29-5.27-6.11V8.99h2.13c.09 2.64 1.21 4.08 2.05 4.08.4 0 .43-.29.43-.82V9h2.05v2.06c0 .78.12 1.02.4 1.02.66 0 1.83-1.7 2-3.09h2.07c-.14 1.03-.85 2.22-1.6 3l-.63.65.69.78c.8.93 1.72 2.43 1.72 2.43h-2.33s-.6-1.12-1.25-1.83c-.4-.43-.67-.54-.92-.54-.32 0-.43.22-.43.7V17Z"/>
+    </svg>
+  </span>
+                    ВКонтакте
+                </a>
+
+                <a class="social-link social-link--tg" href="https://t.me/yourhandle" target="_blank" rel="noopener">
+  <span class="brand-ic">
+    <!-- Telegram SVG -->
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path fill="currentColor" d="M21.5 4.5 2.9 11.7c-1 .39-.98 1.8.05 2.11l4.6 1.5 1.78 5.19c.31.91 1.55 1.01 2.05.16l2.57-4.33 4.69 3.5c.82.62 1.99.16 2.22-.86l2.7-12.2c.25-1.14-.77-2.1-1.96-1.67Z"/>
+    </svg>
+  </span>
+                    Telegram
+                </a>
+
+                <a class="social-link social-link--wa" href="https://wa.me/71234567890" target="_blank" rel="noopener">
+  <span class="brand-ic">
+    <!-- WhatsApp SVG -->
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path fill="currentColor" d="M20 12.07c0 4.43-3.67 8.02-8.2 8.02-1.44 0-2.8-.36-3.97-.99L4 20l.93-3.64a7.92 7.92 0 0 1-1.13-4.29C3.8 7.64 7.47 4.05 12 4.05s8 3.59 8 8.02Zm-4.03 2.37c.13.08.22.24.26.39.06.22.06.4-.03.55-.15.27-.57.51-1.21.56-.7.06-1.58-.1-2.6-.57-2.31-1.06-3.84-3-4.2-3.54-.35-.54-.93-1.6-.93-2.69 0-1.08.57-1.61.81-1.83.1-.09.24-.13.38-.13h.27c.12.01.2.01.29.23.11.27.38.93.41 1 .06.15.1.3.02.47-.08.17-.12.27-.25.42-.13.15-.27.33-.38.45-.12.12-.24.25-.1.51.14.27.63 1.04 1.36 1.68.94.82 1.74 1.08 2.02 1.2.28.12.45.1.61-.06.16-.17.7-.76.89-1.02.19-.27.38-.23.63-.14.25.1 1.58.74 1.85.87Z"/>
+    </svg>
+  </span>
+                    WhatsApp
+                </a>
             </div>
         </div>
     </div>
-
-    
     <script src="js/app.js"></script>
 </body>
 </html>
