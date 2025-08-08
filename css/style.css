@@ -1180,7 +1180,7 @@ body.theme-soft {
             isolation: isolate;
             border-radius: 16px;
             overflow: hidden;
-            height: 280px;
+            height: 480px;
             /* было: background: #1f1f1f; — убираем, чтобы не перекрывал фон-картинку */
             background: transparent;
             border: 1px solid #343434;
@@ -1286,4 +1286,86 @@ body.theme-soft {
         /* уважение к reduced motion */
         @media (prefers-reduced-motion: reduce) {
             .service-card, .service-card::before, .shine { transition: none; }
+        }
+        /* === Contact Drawer (side panel) === */
+        .drawer-backdrop{
+            position: fixed; inset: 0;
+            background: rgba(0,0,0,.6);
+            backdrop-filter: blur(2px);
+            opacity: 0; visibility: hidden;
+            transition: opacity var(--transition), visibility var(--transition);
+            z-index: 1900;
+        }
+        .drawer-backdrop.open{ opacity: 1; visibility: visible; }
+
+        .contact-drawer{
+            position: fixed; top: 80px; right: 0;
+            width: min(420px, 92vw);
+            height: calc(100vh - 100px);
+            background: var(--bg-light);
+            border-left: 1px solid #404040;
+            box-shadow: -12px 0 36px rgba(0,0,0,.45);
+            transform: translateX(100%);
+            transition: transform var(--transition);
+            z-index: 2000;
+            display: grid;
+            grid-template-rows: auto 1fr auto;
+        }
+        .contact-drawer.open{ transform: translateX(0); }
+
+        .drawer-header{
+            display:flex; justify-content:space-between; align-items:center;
+            padding: 1rem; border-bottom: 1px solid #404040;
+        }
+        .drawer-close{
+            background: transparent; border: 0; color: var(--gray);
+            font-size: 1.6rem; cursor: pointer; border-radius: 8px;
+        }
+        .drawer-close:hover{ color: var(--text); background: rgba(255,255,255,.06); }
+
+        .drawer-form{
+            padding: 1rem; overflow-y: auto; display: grid; gap: .8rem;
+        }
+        .drawer-meta{
+            border-top: 1px solid #404040; padding: .9rem 1rem; color: var(--gray);
+            font-size: .95rem;
+        }
+
+        /* Кнопка-иконка остается прежней, можно чуть сместить */
+        #contactToggle { top: 90px; right: 20px; }
+
+        /* Мобильная адаптация */
+        @media (max-width: 768px){
+            .contact-drawer{ top: 70px; height: calc(100vh - 80px); }
+            #contactToggle { top: 80px; right: 10px; }
+        }
+
+
+        /* Панель: максимально на композитор */
+        .contact-drawer{
+            transform: translate3d(100%,0,0);     /* уже есть — оставляем */
+            will-change: transform;
+            backface-visibility: hidden;
+            contain: paint;                       /* не заставлять перерасчёт окружения */
+            /* заменим очень жирную тень на более лёгкую */
+            box-shadow: -8px 0 24px rgba(0,0,0,.35);
+            transition: transform 1000ms cubic-bezier(.22,.61,.36,1);
+        }
+        .contact-drawer.open{ transform: translate3d(0,0,0); }
+
+        /* Бэкдроп — без смены hidden, чтобы не было layout-скачка */
+        .drawer-backdrop{
+            opacity: 0;
+            pointer-events: none;
+            visibility: visible;                  /* фиксируем layout */
+            transition: opacity 1200ms ease;
+        }
+        .drawer-backdrop.open{
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        /* На всякий случай уберём резкие тени на слабых устройствах */
+        @media (prefers-reduced-motion: reduce){
+            .contact-drawer, .drawer-backdrop { transition: none !important; }
         }

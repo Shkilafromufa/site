@@ -208,12 +208,14 @@ function closePopup() {
   document.getElementById('popup').classList.remove('open');
 }
 
-document.getElementById('contactForm').addEventListener('submit', function (e) {
+const legacyContactForm = document.getElementById('contactForm');
+legacyContactForm?.addEventListener('submit', function (e) {
   e.preventDefault();
   const formData = new FormData(this);
   alert('Заявка отправлена! Мы свяжемся с вами в течение 24 часов.');
   this.reset();
 });
+
 
 setTimeout(openPopup, 45000);
 
@@ -695,5 +697,74 @@ function escapeHtml(str='') {
     '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'
   }[m]));
 }
+// === Contact Drawer ===
+const drawer = document.getElementById('contactDrawer');
+const backdrop = document.getElementById('drawerBackdrop');
+const toggleBtn = document.getElementById('contactToggle');
+const closeBtn = document.getElementById('drawerClose');
+const drawerForm = document.getElementById('drawerContactForm');
+
+function openDrawer(){
+  if (!drawer || !backdrop) return;
+
+  // фиксируем страницу
+  document.documentElement.classList.add('drawer-open');
+  document.body.classList.add('drawer-open');
+
+  // двойной rAF: гарантируем, что браузер «увидит» стартовые стили
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      drawer.classList.add('open');
+      backdrop.classList.add('open');
+      toggleBtn?.setAttribute('aria-expanded','true');
+      drawer.setAttribute('aria-hidden','false');
+    });
+  });
+}
+
+function closeDrawer(){
+  if (!drawer || !backdrop) return;
+
+  drawer.classList.remove('open');
+  backdrop.classList.remove('open');
+
+  const cleanup = () => {
+    document.documentElement.classList.remove('drawer-open');
+    document.body.classList.remove('drawer-open');
+    drawer.removeEventListener('transitionend', cleanup);
+    backdrop.removeEventListener('transitionend', cleanup);
+  };
+  drawer.addEventListener('transitionend', cleanup);
+  backdrop.addEventListener('transitionend', cleanup);
+
+  toggleBtn?.setAttribute('aria-expanded','false');
+  drawer.setAttribute('aria-hidden','true');
+}
+
+// Клики
+toggleBtn?.addEventListener('click', openDrawer);
+closeBtn?.addEventListener('click', closeDrawer);
+backdrop?.addEventListener('click', (e)=>{ if (e.target === backdrop) closeDrawer(); });
+
+// ESC для закрытия
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && drawer?.classList.contains('open')) closeDrawer();
+});
+
+// Отправка формы (демо)
+drawerForm?.addEventListener('submit', async function(e){
+  e.preventDefault();
+  const fd = new FormData(this);
+  try {
+    // TODO: отправка на ваш эндпоинт, например:
+    // const r = await fetch('api/contact.php', { method:'POST', body: fd });
+    // if (!r.ok) throw new Error('send_failed');
+    alert('Заявка отправлена! Мы свяжемся с вами в течение 24 часов.');
+    this.reset();
+    closeDrawer();
+  } catch(err){
+    alert('Не удалось отправить сообщение. Попробуйте позже.');
+  }
+});
 
 

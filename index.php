@@ -16,8 +16,7 @@
             <nav class="site-nav" id="nav">
                 <a href="#" data-page="services" class="nav-link active">Наши услуги</a>
                 <a href="#" data-page="about" class="nav-link">О компании</a>
-                <a href="#" data-page="contacts" class="nav-link">Контакты</a>
-            
+<!--                <a href="#" data-page="contacts" class="nav-link">Контакты</a>-->
                 <a href="#" data-page="admin" class="nav-link">Личный кабинет</a>
             </nav>
             <div class="burger" onclick="toggleNav()">
@@ -272,60 +271,60 @@
             </div>
         </section>
 
-        <!-- Contacts Page -->
-        <section id="contacts" class="page-section">
-            <div class="contacts">
-                <div class="container">
-                    <h2 class="section-title">Наши контакты</h2>
-                    <div class="contact-grid">
-                        <div class="contact-info">
-                            <h3>Свяжитесь с нами</h3>
-                            
-                            <div class="contact-item">
-                                <strong>Телефон:</strong>
-                                <p>+7 ___ --_</p>
-                            </div>
-                            
-                            <div class="contact-item">
-                                <strong>Email:</strong>
-                                <p>)_______.ru</p>
-                            </div>
-                            
-                            <div class="contact-item">
-                                <strong>Производственный участок:</strong>
-                                <p>___, ___, ___</p>
-                            </div>
-                            
-                            <div class="contact-item">
-                                <strong>График работы:</strong>
-                                <p>Пн-Пт 09:00-18:00 (UTC+5, Уфа)</p>
-                            </div>
-                            
-                            <div class="contact-item">
-                                <strong>Мессенджеры:</strong>
-                                <p>WhatsApp или Telegram @_______</p>
-                                <p><em>Прикрепите 3D-модель для ускоренного расчёта</em></p>
-                            </div>
-                        </div>
-
-                        <div>
-                            <h3>Получить расчёт за 24 часа</h3>
-                            <form class="contact-form" id="contactForm">
-                                <input type="text" name="name" placeholder="Ваше имя" required>
-                                <input type="tel" name="phone" placeholder="Телефон" required>
-                                <input type="email" name="email" placeholder="Email" required>
-                                <textarea name="message" rows="5" placeholder="Сообщение" required></textarea>
-                                <label class="file-label">
-                                    📎 Прикрепить файл (3D-модель, чертежи)
-                                    <input type="file" name="file" accept=".dwg,.step,.igs,.pdf">
-                                </label>
-                                <button type="submit" class="btn accent">Связаться с нами</button>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
+<!--        <!-- Contacts Page -->-->
+<!--        <section id="contacts" class="page-section">-->
+<!--            <div class="contacts">-->
+<!--                <div class="container">-->
+<!--                    <h2 class="section-title">Наши контакты</h2>-->
+<!--                    <div class="contact-grid">-->
+<!--                        <div class="contact-info">-->
+<!--                            <h3>Свяжитесь с нами</h3>-->
+<!--                            -->
+<!--                            <div class="contact-item">-->
+<!--                                <strong>Телефон:</strong>-->
+<!--                                <p>+7 ___ --_</p>-->
+<!--                            </div>-->
+<!--                            -->
+<!--                            <div class="contact-item">-->
+<!--                                <strong>Email:</strong>-->
+<!--                                <p>)_______.ru</p>-->
+<!--                            </div>-->
+<!--                            -->
+<!--                            <div class="contact-item">-->
+<!--                                <strong>Производственный участок:</strong>-->
+<!--                                <p>___, ___, ___</p>-->
+<!--                            </div>-->
+<!--                            -->
+<!--                            <div class="contact-item">-->
+<!--                                <strong>График работы:</strong>-->
+<!--                                <p>Пн-Пт 09:00-18:00 (UTC+5, Уфа)</p>-->
+<!--                            </div>-->
+<!--                            -->
+<!--                            <div class="contact-item">-->
+<!--                                <strong>Мессенджеры:</strong>-->
+<!--                                <p>WhatsApp или Telegram @_______</p>-->
+<!--                                <p><em>Прикрепите 3D-модель для ускоренного расчёта</em></p>-->
+<!--                            </div>-->
+<!--                        </div>-->
+<!---->
+<!--                        <div>-->
+<!--                            <h3>Получить расчёт за 24 часа</h3>-->
+<!--                            <form class="contact-form" id="contactForm">-->
+<!--                                <input type="text" name="name" placeholder="Ваше имя" required>-->
+<!--                                <input type="tel" name="phone" placeholder="Телефон" required>-->
+<!--                                <input type="email" name="email" placeholder="Email" required>-->
+<!--                                <textarea name="message" rows="5" placeholder="Сообщение" required></textarea>-->
+<!--                                <label class="file-label">-->
+<!--                                    📎 Прикрепить файл (3D-модель, чертежи)-->
+<!--                                    <input type="file" name="file" accept=".dwg,.step,.igs,.pdf">-->
+<!--                                </label>-->
+<!--                                <button type="submit" class="btn accent">Связаться с нами</button>-->
+<!--                            </form>-->
+<!--                        </div>-->
+<!--                    </div>-->
+<!--                </div>-->
+<!--            </div>-->
+<!--        </section>-->
 		<!-- Admin (SPA) -->
     <section id="admin" class="page-section">
       <div class="container">
@@ -352,12 +351,39 @@
     </footer>
 
     <!-- Admin Toggle Button -->
-    <button class="admin-toggle" id="adminToggle" onclick="openPopup()">✉️</button>
-    
-    <!-- Admin Panel moved to /admin/ -->
-    </div>
-    
-    
+    <button class="admin-toggle" id="contactToggle" aria-controls="contactDrawer" aria-expanded="false">✉️</button>
+    <!-- Backdrop -->
+    <div class="drawer-backdrop" id="drawerBackdrop" hidden></div>
+
+    <!-- Contact Drawer -->
+    <aside class="contact-drawer" id="contactDrawer" aria-hidden="true">
+        <header class="drawer-header">
+            <h3>Оставить заявку</h3>
+            <button class="drawer-close" id="drawerClose" aria-label="Закрыть">×</button>
+        </header>
+
+        <form class="contact-form drawer-form" id="drawerContactForm">
+            <input type="text" name="name" placeholder="Ваше имя" required>
+            <input type="tel" name="phone" placeholder="Телефон" required>
+            <input type="email" name="email" placeholder="Email" required>
+            <textarea name="message" rows="5" placeholder="Сообщение" required></textarea>
+
+            <label class="file-label">
+                📎 Прикрепить файл (3D-модель, чертежи)
+                <input type="file" name="file" accept=".dwg,.step,.igs,.pdf,.stp,.dxf,.zip,.rar,.7z,.pdf">
+            </label>
+
+            <button type="submit" class="btn accent">Отправить</button>
+        </form>
+
+        <div class="drawer-meta">
+            <div><strong>Телефон:</strong> +7 ___ --_</div>
+            <div><strong>Telegram:</strong> @_______</div>
+            <div><strong>WhatsApp:</strong> +7 ___ --_</div>
+        </div>
+    </aside>
+
+
     <!-- Popup -->
     <div class="popup" id="popup">
         <div class="popup-content">

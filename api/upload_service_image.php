@@ -40,7 +40,7 @@ if (!move_uploaded_file($f['tmp_name'], $abs)) {
 }
 
 /* web-путь */
-$rel = 'uploads/services/' . $service_id . '/' . $fname;
+$rel = '/uploads/services/' . $service_id . '/' . $fname; // <-- ведущий слеш
 
 /* сохранить запись */
 $stmt = $db->prepare('INSERT INTO service_images (service_id, path, alt) VALUES (?,?,?)');
