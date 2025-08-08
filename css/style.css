@@ -12,6 +12,7 @@
 }
 
 /* Theme variants */
+body.nav-open #contactToggle {opacity: 0;pointer-events: none;transform: translateY(6px) scale(.98);transition: opacity .2s ease, transform .2s ease;}
 body.theme-sunburst{ --accent:#ffad00; --accent-secondary:#5fa9ff; --accent-tertiary:#00d4aa; }
 body.theme-warm{ --accent:#ffad00; --accent-secondary:#ff8800; --accent-tertiary:#ffe066; --bg:#1a1a1a; --bg-light:#2a2a2a; }
 body.theme-soft{ --accent:#ffad00; --accent-secondary:#ffc266; --accent-tertiary:#5fa9ff; --bg:#222; --bg-light:#333; }
