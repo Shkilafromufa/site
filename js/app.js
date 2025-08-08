@@ -217,7 +217,6 @@ legacyContactForm?.addEventListener('submit', function (e) {
 });
 
 
-setTimeout(openPopup, 45000);
 
 document.addEventListener('DOMContentLoaded', loadServices);
 

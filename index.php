@@ -14,7 +14,7 @@
         <div class="container flex-between">
             <div class="logo">Альтернатива</div>
             <nav class="site-nav" id="nav">
-                <a href="#" data-page="services" class="nav-link active">Наши услуги</a>
+                <a href="#" data-page="services" class="nav-link active">Главная страница</a>
                 <a href="#" data-page="about" class="nav-link">О компании</a>
 <!--                <a href="#" data-page="contacts" class="nav-link">Контакты</a>-->
                 <a href="#" data-page="admin" class="nav-link">Личный кабинет</a>
