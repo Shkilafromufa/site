@@ -174,23 +174,41 @@ async function adminIsLogged() {
 
 function adminRenderLogin() {
   const root = document.getElementById('adminRoot');
+  /*
+   * Render a modern login form for the admin panel.
+   * The markup avoids inline styles in favour of dedicated CSS classes. A
+   * wrapper card with the class `admin-login-card` controls sizing and
+   * spacing. Inputs are grouped in a flex column via the
+   * `admin-login-form` class for consistent spacing.
+   */
   root.innerHTML = `
-    <div class="admin-card" style="max-width:520px;margin:1rem auto;">
-      <h3 style="margin-top:0">Введите логин и пароль администратора</h3>
-      <p class="muted"></p>
-	  <br>
-      <div style="display:grid; gap:.75rem;">
+  <div class="admin-card admin-login-card">
+    <div class="title">Вход администратора</div>
+    <hr class="hr-soft">
+    <div class="admin-login-form">
+      <div class="input-wrap">
         <input id="admUser" class="form-control" placeholder="Логин" autocomplete="username">
-        <input id="admPass" class="form-control" type="password" placeholder="Пароль" autocomplete="current-password">
-        <div class="admin-actions">
-          <button class="btn accent" id="admLoginBtn">Войти</button>
-        </div>
       </div>
-    </div>`;
+      <div class="input-wrap">
+        <input id="admPass" class="form-control" type="password" placeholder="Пароль" autocomplete="current-password">
+        <button type="button" class="toggle-pass" aria-label="Показать пароль" id="togglePass">👁</button>
+      </div>
+
+      <div class="admin-login-meta">Доступ только для сотрудников</div>
+
+      <div class="admin-actions">
+        <button class="btn accent wide" id="admLoginBtn">Войти</button>
+      </div>
+    </div>
+  </div>`;
   document.getElementById('admLoginBtn').onclick = async () => {
     const username = document.getElementById('admUser').value.trim();
     const password = document.getElementById('admPass').value;
-    const res = await fetch('api/login.php', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({username, password})});
+    const res = await fetch('api/login.php', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password })
+    });
     if (res.ok) adminRenderDashboard();
     else alert('Неверные учетные данные');
   };
@@ -292,4 +310,168 @@ async function adminInitPage() {
     oldShowPage(pageId);
     if (pageId === 'admin') { adminInitPage(); }
   };
+})();
+
+document.addEventListener('click', (e) => {
+  const btn = e.target.closest('.toggle-pass, #togglePass');
+  if (!btn) return;
+
+  const input = document.getElementById('admPass');
+  if (!input) return;
+
+  const isPwd = input.type === 'password';
+  input.type = isPwd ? 'text' : 'password';
+  btn.setAttribute('aria-label', isPwd ? 'Скрыть пароль' : 'Показать пароль');
+});
+
+// === Infinite Centered Carousel (swipe + clones) ===
+(function(){
+  const root = document.getElementById('workCarousel');
+  if (!root) return;
+
+  const track = root.querySelector('.ic-track');
+  const prev  = root.querySelector('.ic-btn.prev');
+  const next  = root.querySelector('.ic-btn.next');
+  const dots  = root.querySelector('#workDots');
+
+  // исходные карточки (без клонов)
+  const originals = [...track.querySelectorAll('.ic-card')];
+  const N = originals.length;
+  if (N === 0) return;
+
+  // сколько клонов с каждой стороны достаточно? 3 — с запасом
+  const CLONE_COUNT = Math.min(3, N);
+
+  // создаём клоны в начало и конец
+  function cloneSide(items){
+    return items.map(n => n.cloneNode(true));
+  }
+  const headClones = cloneSide(originals.slice(-CLONE_COUNT));
+  const tailClones = cloneSide(originals.slice(0, CLONE_COUNT));
+
+  headClones.forEach(n => track.insertBefore(n, track.firstChild));
+  tailClones.forEach(n => track.appendChild(n));
+
+  // рабочий список всех карточек после клонирования
+  const all = [...track.querySelectorAll('.ic-card')];
+
+  // индексы: сдвиг = количество клонов слева
+  let offset = CLONE_COUNT;
+  let active = 0; // индекс в пределах [0, N-1]
+
+  // утилиты размеров
+  const gapPx = () => parseFloat(getComputedStyle(track).columnGap || getComputedStyle(track).gap || '0');
+  const slideW = () => {
+    const first = all[offset]?.getBoundingClientRect();
+    return (first?.width || 0) + gapPx();
+  };
+
+  // точки
+  originals.forEach((_, i) => {
+    const b = document.createElement('button');
+    b.className = 'dot';
+    b.type = 'button';
+    b.addEventListener('click', () => goTo(i));
+    dots.appendChild(b);
+  });
+
+  function syncDots(){
+    dots.querySelectorAll('.dot').forEach((d, i) => d.classList.toggle('active', i === active));
+  }
+
+  // прокрутка к реальному индексу (0..N-1)
+  function goTo(i, smooth = true){
+    active = (i + N) % N;
+    const targetIndexInAll = offset + active; // позиция с учётом клонов
+    const left = targetIndexInAll * slideW() - getScrollPaddingLeft();
+    track.scrollTo({ left, behavior: smooth ? 'smooth' : 'auto' });
+    syncDots();
+  }
+
+  // чтение scroll-padding-left из стилей
+  function getScrollPaddingLeft(){
+    const val = getComputedStyle(track).getPropertyValue('scroll-padding-left');
+    return parseFloat(val) || 0;
+  }
+
+  // нормализация: если ушли в клоны — мгновенно перепрыгиваем к оригиналу
+  let normalizeTimer = null;
+  function scheduleNormalize(){
+    if (normalizeTimer) clearTimeout(normalizeTimer);
+    normalizeTimer = setTimeout(normalize, 120); // после окончания инерции
+  }
+  function normalize(){
+    const idx = Math.round((track.scrollLeft + getScrollPaddingLeft()) / slideW());
+    const relative = idx - offset; // -> может быть вне [0..N-1]
+    const normalized = ((relative % N) + N) % N;
+    if (relative !== normalized){
+      // мгновенный прыжок на соответствующую позицию
+      active = normalized;
+      const left = (offset + active) * slideW() - getScrollPaddingLeft();
+      track.scrollTo({ left, behavior: 'auto' });
+      syncDots();
+    }else{
+      // просто синхронизируем активную точку
+      active = normalized;
+      syncDots();
+    }
+  }
+
+  // кнопки
+  prev.addEventListener('click', () => goTo(active - 1));
+  next.addEventListener('click', () => goTo(active + 1));
+
+  // клавиатура
+  root.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight') next.click();
+    if (e.key === 'ArrowLeft')  prev.click();
+  });
+
+  // свайпы/драг (pointer events)
+  let dragging = false, startX = 0, startLeft = 0, pointerId = null;
+  track.addEventListener('pointerdown', (e) => {
+    dragging = true;
+    pointerId = e.pointerId;
+    startX = e.clientX;
+    startLeft = track.scrollLeft;
+    track.setPointerCapture(pointerId);
+    track.classList.add('dragging');
+  });
+  track.addEventListener('pointermove', (e) => {
+    if (!dragging) return;
+    track.scrollLeft = startLeft - (e.clientX - startX);
+  });
+  track.addEventListener('pointerup', (e) => {
+    if (!dragging) return;
+    dragging = false;
+    track.releasePointerCapture(pointerId);
+    track.classList.remove('dragging');
+
+    // «прищёлкнем» к ближайшей карточке
+    const idx = Math.round((track.scrollLeft + getScrollPaddingLeft()) / slideW());
+    const relative = idx - offset;
+    goTo(relative, true);
+    scheduleNormalize();
+  });
+  track.addEventListener('pointercancel', () => {
+    dragging = false;
+    track.classList.remove('dragging');
+    scheduleNormalize();
+  });
+
+  // следим за прокруткой (инерция/колёсико)
+  track.addEventListener('scroll', scheduleNormalize, { passive: true });
+
+  // ресайз — пересчёт позиций
+  window.addEventListener('resize', () => {
+    // после изменения ширины возвращаемся к текущему активу
+    goTo(active, false);
+  });
+
+  // Инициализация: ставим на 1-й оригинальный слайд по центру
+  // (после добавления клонов)
+  requestAnimationFrame(() => {
+    goTo(0, false);
+    syncDots();
+  });
 })();

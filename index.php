@@ -112,56 +112,81 @@
                 </div>
             </div>
 
-            <!-- Gallery -->
             <div class="gallery">
                 <div class="container">
                     <h2 class="section-title">Наши работы</h2>
-                    <div class="gallery-slider">
-                        <div class="slide">
-                            <img src="assets/2.jpg" alt="Подготовка пресс-форм" class="slide-image">
-                            <h4>Подготовка пресс-форм</h4>
-                            <p>Точная подготовка перед запуском</p>
+
+                    <div class="inf-carousel" id="workCarousel" aria-label="Галерея работ" tabindex="0">
+                        <button class="ic-btn prev" aria-label="Назад">‹</button>
+
+                        <div class="ic-track">
+                            <!-- ОРИГИНАЛЬНЫЕ СЛАЙДЫ (без клонов; клоны добавит JS) -->
+                            <article class="ic-card">
+
+                                <img src="assets/2.jpg" alt="Подготовка заготовок и оснастки для пресс-формы">
+                                <h4>Этап 1 — Подготовка заготовок</h4>
+                                <p>Отбор материала, подготовка баз и оснастки под дальнейшую обработку.</p>
+                            </article>
+
+                            <article class="ic-card">
+
+                                <img src="assets/4.jpg" alt="Фрезерование на 5-осевом ЧПУ">
+                                <h4>Этап 2 — ЧПУ-фрезерование</h4>
+                                <p>Черновая и чистовая обработка геометрии на многоосевых станках.</p>
+                            </article>
+
+                            <article class="ic-card">
+
+                                <img src="assets/6.jpg" alt="Высокоскоростная обработка деталей">
+                                <h4>Этап 3 — Высокоскоростная обработка</h4>
+                                <p>Повышение точности и качества поверхности на скоростных режимах.</p>
+                            </article>
+
+                            <article class="ic-card">
+
+                                <img src="assets/5.jpg" alt="Точная обработка и доведение размеров">
+                                <h4>Этап 4 — Точная обработка</h4>
+                                <p>Доведение критических посадок и переходов до требуемых допусков.</p>
+                            </article>
+
+                            <article class="ic-card">
+
+                                <img src="assets/11.jpg" alt="Ручная доводка пресс-формы">
+                                <h4>Этап 5 — Ручная доводка</h4>
+                                <p>Полировка, притирка и устранение микронных несоосностей вручную.</p>
+                            </article>
+
+                            <article class="ic-card">
+
+                                <img src="assets/3.jpg" alt="Сборка и подгонка узлов пресс-формы">
+                                <h4>Этап 6 — Сборка узлов</h4>
+                                <p>Комплектация, подгонка сопряжений, проверка кинематики формы.</p>
+                            </article>
+
+                            <article class="ic-card">
+
+                                <img src="assets/8.jpg" alt="Готовая пресс-форма после приемки">
+                                <h4>Этап 7 — Приёмка</h4>
+                                <p>Контроль геометрии и поверхности, подготовка к запуску у клиента.</p>
+                            </article>
+
+                            <article class="ic-card">
+
+                                <img src="assets/9.jpg" alt="Запуск пресс-формы в серийное производство">
+                                <h4>Этап 8 — Запуск в серию</h4>
+                                <p>Пуско-наладка на площадке, стабилизация параметров литья.</p>
+                            </article>
+
+                            <article class="ic-card">
+
+                                <img src="assets/10.jpg" alt="Расширение парка оборудования для поддержки проектов">
+                                <h4>Этап 9 — Поддержка и развитие</h4>
+                                <p>Сервис и модернизация форм, расширение парка под новые задачи.</p>
+                            </article>
                         </div>
-                        <div class="slide">
-                            <img src="assets/3.jpg" alt="Рабочий процесс" class="slide-image">
-                            <h4>Рабочий процесс</h4>
-                            <p>Сборка и настройка узлов</p>
-                        </div>
-                        <div class="slide">
-                            <img src="assets/4.jpg" alt="Станок в работе" class="slide-image">
-                            <h4>Станок в работе</h4>
-                            <p>Автоматизированная обработка деталей</p>
-                        </div>
-                        <div class="slide">
-                            <img src="assets/5.jpg" alt="Процесс обработки" class="slide-image">
-                            <h4>Процесс обработки</h4>
-                            <p>Стабильное производство</p>
-                        </div>
-                        <div class="slide">
-                            <img src="assets/6.jpg" alt="Высокая скорость обработки" class="slide-image">
-                            <h4>Высокая скорость обработки</h4>
-                            <p>Точное изготовление компонентов</p>
-                        </div>
-                        <div class="slide">
-                            <img src="assets/8.jpg" alt="Готовая пресс-форма" class="slide-image">
-                            <h4>Готовая пресс-форма</h4>
-                            <p>Финишный результат ремонта</p>
-                        </div>
-                        <div class="slide">
-                            <img src="assets/9.jpg" alt="Производственные масштабы" class="slide-image">
-                            <h4>Производственные масштабы</h4>
-                            <p>Объемные работы на участке</p>
-                        </div>
-                        <div class="slide">
-                            <img src="assets/10.jpg" alt="Новый станок" class="slide-image">
-                            <h4>Новый станок</h4>
-                            <p>Расширение парка оборудования</p>
-                        </div>
-                        <div class="slide">
-                            <img src="assets/11.jpg" alt="Ручной ремонт пресс-форм" class="slide-image">
-                            <h4>Ручной ремонт</h4>
-                            <p>Ювелирная доводка деталей вручную</p>
-                        </div>
+
+                        <button class="ic-btn next" aria-label="Вперёд">›</button>
+                        <div class="ic-dots" id="workDots" aria-label="Навигация"></div>
                     </div>
                 </div>
             </div>
@@ -322,7 +347,7 @@
     </footer>
 
     <!-- Admin Toggle Button -->
-    <button class="admin-toggle" id="adminToggle" onclick="openPopup()">⚙️</button>
+    <button class="admin-toggle" id="adminToggle" onclick="openPopup()">✉️</button>
     
     <!-- Admin Panel moved to /admin/ -->
     </div>
