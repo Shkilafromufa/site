@@ -26,21 +26,45 @@ let services = [];
 
 async function loadServices() {
   const res = await fetch('api/services.php');
+  if (!res.ok) { console.error('services list failed', res.status); return; }
   services = await res.json();
+
   const container = document.getElementById('services-container');
   container.innerHTML = '';
-  services.forEach((service, index) => {
-    const card = document.createElement('div');
-    card.className = 'card';
-    card.innerHTML = `
-    <div class="card-icon-placeholder">${index + 1}</div>
-      <h3>${service.name}</h3>
-      <p>${service.description}</p>
-      <ul>${service.features.map(f => `<li>${f}</li>`).join('')}</ul>
+
+  services.forEach((s, i) => {
+    const el = document.createElement('article');
+    el.className = 'card card-link';
+    el.setAttribute('role', 'button');
+    el.setAttribute('tabindex', '0');
+    el.dataset.id = s.id;
+    el.innerHTML = `
+      <div class="card-icon-placeholder">${i + 1}</div>
+      <h3>${s.name}</h3>
+      <p>${s.description || ''}</p>
     `;
-    container.appendChild(card);
+    container.appendChild(el);
+  });
+
+  // Клик по карточке
+  container.addEventListener('click', onCardClick);
+  // Клавиатура (Enter/Space)
+  container.addEventListener('keydown', (e) => {
+    const card = e.target.closest('.card-link');
+    if (!card) return;
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      openService(+card.dataset.id);
+    }
   });
 }
+
+function onCardClick(e){
+  const card = e.target.closest('.card-link');
+  if (!card) return;
+  openService(+card.dataset.id);
+}
+
 
 function openAdmin() {
   document.getElementById('adminPanel').classList.add('open');
@@ -230,6 +254,7 @@ function adminRenderDashboard() {
           <input id="aName" class="form-control" placeholder="Название услуги">
           <textarea id="aDesc" class="form-control" rows="4" placeholder="Описание услуги"></textarea>
           <textarea id="aFeat" class="form-control" rows="3" placeholder="Особенности (каждая с новой строки)"></textarea>
+          <input id="aImgs" class="form-control" type="file" accept="image/*" multiple>
           <div class="admin-actions">
             <button class="btn accent" id="aAdd">Добавить</button>
             <button class="btn ghost" id="aLogout">Выйти</button>
@@ -252,16 +277,49 @@ function adminRenderDashboard() {
     adminRenderLogin();
   };
 
+  // >>> ЕДИНСТВЕННЫЙ обработчик добавления + заливка фото <<<
   document.getElementById('aAdd').onclick = async () => {
-    const payload = {
-      name: document.getElementById('aName').value.trim(),
-      description: document.getElementById('aDesc').value.trim(),
-      features: document.getElementById('aFeat').value.split('\n').map(s=>s.trim()).filter(Boolean)
-    };
-    if (!payload.name || !payload.description) { alert('Заполните название и описание'); return; }
-    const r = await fetch('api/services.php', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)});
-    if (r.ok) { document.getElementById('aName').value=''; document.getElementById('aDesc').value=''; document.getElementById('aFeat').value=''; adminLoadList(); }
-    else alert('Ошибка при добавлении');
+    const name = document.getElementById('aName').value.trim();
+    const description = document.getElementById('aDesc').value.trim();
+    const features = document.getElementById('aFeat').value.split('\n').map(s=>s.trim()).filter(Boolean);
+    const files = document.getElementById('aImgs').files;
+
+    if (!name || !description) { alert('Заполните название и описание'); return; }
+
+    // 1) создаём услугу
+    const r = await fetch('api/services.php', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ name, description, features })
+    });
+    if (!r.ok) { alert('Ошибка при добавлении услуги'); return; }
+
+    const j = await r.json();
+    const newId = j?.id ?? j?.insert_id; // на всякий случай
+
+    // 2) грузим файлы, если выбраны и есть id
+    if (newId && files && files.length) {
+      for (const file of files) {
+        const fd = new FormData();
+        fd.append('service_id', newId);
+        fd.append('image', file);
+        const up = await fetch('api/upload_service_image.php', { method:'POST', body: fd });
+        if (!up.ok) {
+          console.warn('upload failed for', file.name);
+          alert('Ошибка загрузки: ' + file.name);
+        }
+      }
+    }
+
+    // 3) очистка формы и обновление списков
+    document.getElementById('aName').value = '';
+    document.getElementById('aDesc').value = '';
+    document.getElementById('aFeat').value = '';
+    document.getElementById('aImgs').value = '';
+
+    await adminLoadList();
+    await loadServices();
+    alert('Услуга добавлена!');
   };
 
   adminLoadList();
@@ -269,10 +327,40 @@ function adminRenderDashboard() {
 
 async function adminLoadList() {
   const list = document.getElementById('aList');
+
+  // навешиваем обработчик "change" только ОДИН раз на весь список
+  if (!list._changeBound) {
+    list.addEventListener('change', async (e) => {
+      const input = e.target.closest('input[type="file"][data-up-for]');
+      if (!input) return;
+
+      const sid = +input.dataset.upFor;
+      const files = input.files;
+      if (!sid || !files || !files.length) return;
+
+      for (const file of files) {
+        const fd = new FormData();
+        fd.append('service_id', sid);
+        fd.append('image', file);
+        const up = await fetch('api/upload_service_image.php', { method: 'POST', body: fd });
+        if (!up.ok) {
+          alert('Ошибка загрузки: ' + file.name);
+          // продолжаем остальные файлы, не роняем всё
+        }
+      }
+
+      input.value = '';
+      alert('Фото добавлено');
+    });
+    list._changeBound = true; // флаг «уже привязан»
+  }
+
   list.innerHTML = '<div class="muted">Загрузка...</div>';
+
   try {
     const data = await adminFetchServices();
     document.getElementById('aCount').textContent = data.length;
+
     list.innerHTML = '';
     data.forEach(s => {
       const card = document.createElement('div');
@@ -280,20 +368,29 @@ async function adminLoadList() {
       card.innerHTML = `
         <div class="top">
           <h4>#${s.id} ${s.name}</h4>
-          <button class="btn danger" data-id="${s.id}">Удалить</button>
+          <div style="display:flex; gap:.5rem;">
+            <label class="btn ghost btn-small">
+              Добавить фото
+              <input type="file" accept="image/*" data-up-for="${s.id}" style="display:none">
+            </label>
+            <button class="btn danger" data-id="${s.id}">Удалить</button>
+          </div>
         </div>
-        <div class="muted">${s.description}</div>
-        <ul>${(s.features||[]).map(f=>`<li>${f}</li>`).join('')}</ul>`;
+        <div class="muted">${s.description || ''}</div>
+        <ul>${(s.features || []).map(f => `<li>${f}</li>`).join('')}</ul>
+      `;
       list.appendChild(card);
     });
+
+    // обработчики удаления можно перевешивать — элементы заново отрендерены
     list.querySelectorAll('button[data-id]').forEach(btn => {
       btn.onclick = async () => {
         if (!confirm('Удалить услугу?')) return;
-        const r = await fetch('api/services.php?id='+btn.dataset.id, {method:'DELETE'});
+        const r = await fetch('api/services.php?id=' + btn.dataset.id, { method: 'DELETE' });
         if (r.ok) adminLoadList(); else alert('Ошибка удаления');
       };
     });
-  } catch(e) {
+  } catch (e) {
     list.innerHTML = '<div class="muted">Не удалось загрузить список</div>';
   }
 }
@@ -475,3 +572,79 @@ document.addEventListener('click', (e) => {
     syncDots();
   });
 })();
+async function openService(id) {
+  try {
+    const r = await fetch(`api/services.php?id=${id}`); // <-- ЕД.Ч.
+    if (!r.ok) {
+      const text = await r.text();
+      throw new Error(`HTTP ${r.status}: ${text}`);
+    }
+    const s = await r.json();
+    renderServicePage(s);
+    location.hash = `#service/${id}`;
+    showPage('service');
+  } catch (e) {
+    console.error('openService failed:', e);
+    alert('Не удалось открыть услугу. Проверь путь к API в консоли.');
+  }
+}
+
+function renderServicePage(s) {
+  const wrap = document.getElementById('service-view');
+
+  const featuresHTML = (s.features && s.features.length)
+      ? `<ul class="feature-list">${s.features.map(f => `<li>${escapeHtml(f)}</li>`).join('')}</ul>`
+      : `<div class="muted">Особенности не указаны</div>`;
+
+  const galleryHTML = (s.images && s.images.length)
+      ? `
+      <div class="gallery-grid">
+        ${s.images.map(img => `
+          <a href="${escapeHtml(img.path)}" class="g-item" target="_blank" rel="noopener">
+            <img src="${escapeHtml(img.path)}" alt="${escapeHtml(img.alt || s.name || '')}">
+          </a>
+        `).join('')}
+      </div>
+    `
+      : `<div class="muted">Фото пока нет</div>`;
+
+  wrap.innerHTML = `
+    <article class="service-article">
+      <h2 style="margin:0 0 .5rem">${escapeHtml(s.name || '')}</h2>
+      <p style="font-size:1.05rem; line-height:1.7">${escapeHtml(s.description || '')}</p>
+
+      <hr class="hr-soft" style="margin:1.25rem 0">
+
+      <h3 style="margin:0 0 .5rem">Галерея</h3>
+      ${galleryHTML}
+
+      <hr class="hr-soft" style="margin:1.25rem 0">
+
+      <h3 style="margin:0 0 .5rem">Особенности</h3>
+      ${featuresHTML}
+    </article>
+  `;
+}
+
+
+window.addEventListener('hashchange', handleHashOpen);
+document.addEventListener('DOMContentLoaded', handleHashOpen);
+document.addEventListener('click', (e) => {
+  const a = e.target.closest('#backToServices');
+  if (!a) return;
+  e.preventDefault();
+  // убираем #service/ID из адресной строки и показываем список
+  history.replaceState(null, '', location.pathname + location.search);
+  showPage('services');
+});
+function handleHashOpen(){
+  const m = location.hash.match(/^#service\/(\d+)$/);
+  if (m) openService(+m[1]);
+}
+function escapeHtml(str='') {
+  return String(str).replace(/[&<>"']/g, m => ({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'
+  }[m]));
+}
+
+

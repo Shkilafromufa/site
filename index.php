@@ -200,7 +200,12 @@
                 </div>
             </div> -->
         </section>
-
+        <section id="service" class="page-section">
+            <div class="container">
+                <a href="#" id="backToServices" class="btn ghost">← Назад к услугам</a>
+                <div id="service-view" style="margin-top:1rem"></div>
+            </div>
+        </section>
         <!-- About Page -->
         <section id="about" class="page-section">
             <div class="about">
