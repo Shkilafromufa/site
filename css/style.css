@@ -361,10 +361,14 @@ body.theme-soft {
             grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
             gap: 2rem;
             counter-reset: step;
-            margin-top: 2rem;
+            margin-top: 2rem; /* Убираем точки */
+            list-style: none;
+            padding-left: 0; /* убираем отступ браузера */
+
         }
 
         .steps li {
+
             padding: 1.5rem;
             background: var(--bg);
             border-radius: var(--radius);
@@ -836,7 +840,9 @@ body.theme-soft {
             }
 
             .steps {
+                list-style: none;
                 grid-template-columns: 1fr;
+
             }
 
             .hero-content h1 {
