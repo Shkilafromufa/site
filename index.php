@@ -271,61 +271,6 @@
             </div>
         </section>
 
-<!--        <!-- Contacts Page -->-->
-<!--        <section id="contacts" class="page-section">-->
-<!--            <div class="contacts">-->
-<!--                <div class="container">-->
-<!--                    <h2 class="section-title">Наши контакты</h2>-->
-<!--                    <div class="contact-grid">-->
-<!--                        <div class="contact-info">-->
-<!--                            <h3>Свяжитесь с нами</h3>-->
-<!--                            -->
-<!--                            <div class="contact-item">-->
-<!--                                <strong>Телефон:</strong>-->
-<!--                                <p>+7 ___ --_</p>-->
-<!--                            </div>-->
-<!--                            -->
-<!--                            <div class="contact-item">-->
-<!--                                <strong>Email:</strong>-->
-<!--                                <p>)_______.ru</p>-->
-<!--                            </div>-->
-<!--                            -->
-<!--                            <div class="contact-item">-->
-<!--                                <strong>Производственный участок:</strong>-->
-<!--                                <p>___, ___, ___</p>-->
-<!--                            </div>-->
-<!--                            -->
-<!--                            <div class="contact-item">-->
-<!--                                <strong>График работы:</strong>-->
-<!--                                <p>Пн-Пт 09:00-18:00 (UTC+5, Уфа)</p>-->
-<!--                            </div>-->
-<!--                            -->
-<!--                            <div class="contact-item">-->
-<!--                                <strong>Мессенджеры:</strong>-->
-<!--                                <p>WhatsApp или Telegram @_______</p>-->
-<!--                                <p><em>Прикрепите 3D-модель для ускоренного расчёта</em></p>-->
-<!--                            </div>-->
-<!--                        </div>-->
-<!---->
-<!--                        <div>-->
-<!--                            <h3>Получить расчёт за 24 часа</h3>-->
-<!--                            <form class="contact-form" id="contactForm">-->
-<!--                                <input type="text" name="name" placeholder="Ваше имя" required>-->
-<!--                                <input type="tel" name="phone" placeholder="Телефон" required>-->
-<!--                                <input type="email" name="email" placeholder="Email" required>-->
-<!--                                <textarea name="message" rows="5" placeholder="Сообщение" required></textarea>-->
-<!--                                <label class="file-label">-->
-<!--                                    📎 Прикрепить файл (3D-модель, чертежи)-->
-<!--                                    <input type="file" name="file" accept=".dwg,.step,.igs,.pdf">-->
-<!--                                </label>-->
-<!--                                <button type="submit" class="btn accent">Связаться с нами</button>-->
-<!--                            </form>-->
-<!--                        </div>-->
-<!--                    </div>-->
-<!--                </div>-->
-<!--            </div>-->
-<!--        </section>-->
-		<!-- Admin (SPA) -->
     <section id="admin" class="page-section">
       <div class="container">
         <div class="admin-hero">
