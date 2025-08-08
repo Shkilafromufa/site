@@ -1264,17 +1264,8 @@ body.theme-soft {
             padding: .35rem .55rem;
             border: 1px solid #3a3a3a;
             border-radius: 999px;
-            background: rgba(0,0,0,.35);
+            background: rgba(0,0,0,.45);
             color: #e6e6e6;
-        }
-
-        /* маленькая пиктограмма/счетчик сверху слева */
-        .s-badge {
-            position: absolute; top: 10px; left: 10px;
-            padding: .35rem .6rem; font-size: .8rem;
-            border-radius: 999px;
-            background: rgba(20,20,20,.65);
-            border: 1px solid #3a3a3a;
         }
 
         /* лёгкий «блик» при ховере */
@@ -1374,4 +1365,13 @@ body.theme-soft {
         /* На всякий случай уберём резкие тени на слабых устройствах */
         @media (prefers-reduced-motion: reduce){
             .contact-drawer, .drawer-backdrop { transition: none !important; }
+        }
+        /* >= 769px — максимум две услуги в ряд */
+        @media (min-width: 769px) {
+            .cards {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+        body.nav-open #contactToggle {
+            display: none;
         }

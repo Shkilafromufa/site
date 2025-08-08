@@ -4,6 +4,7 @@ function showPage(pageId) {
   const sec = document.getElementById(pageId);
   if (!sec) { console.warn('No section #'+pageId); return; }
   sec.classList.add('active');
+  scrollTopNow();
   document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
   const active = document.querySelector(`[data-page="${pageId}"]`);
   if (active) active.classList.add('active');
@@ -59,11 +60,10 @@ async function loadServices() {
 
     // базовая верстка
     el.innerHTML = `
-      <span class="s-badge">#${i+1}</span>
       <div class="shine"></div>
       <div class="glass">
         <h3>${escapeHtml(s.name)}</h3>
-        <p>${escapeHtml((s.description || '').slice(0, 110))}${(s.description && s.description.length > 110) ? '…' : ''}</p>
+<p>${escapeHtml(trimDescription(s.description))}</p>
         <div class="s-chips" data-chips></div>
       </div>
     `;
@@ -107,7 +107,29 @@ async function loadServices() {
 
   // делегирование кликов уже есть в твоём коде — можно убрать onCardClick
 }
+function trimDescription(text, minLen = 100) {
+  if (!text) return '';
+  if (text.length <= minLen) return text;
 
+  // Отрезаем первые minLen символов
+  let cut = text.slice(0, minLen);
+
+  // Остаток текста после minLen
+  let rest = text.slice(minLen);
+
+  // Ищем ближайшую точку/воскл/вопрос
+  const match = rest.match(/.*?[.!?]/);
+  if (match) {
+    cut += match[0]; // добавляем до знака
+  }
+
+  return cut.trim();
+}
+function toggleNav() {
+  const nav = document.getElementById('nav');
+  nav.classList.toggle('open');
+  document.body.classList.toggle('nav-open', nav.classList.contains('open'));
+}
 function onCardClick(e){
   const card = e.target.closest('.card-link');
   if (!card) return;
@@ -765,5 +787,15 @@ drawerForm?.addEventListener('submit', async function(e){
     alert('Не удалось отправить сообщение. Попробуйте позже.');
   }
 });
-
+function scrollTopNow() {
+  // двойной rAF — чтобы подождать отрисовку/изображения
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+      // на всякий случай совместимость:
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+    });
+  });
+}
 
