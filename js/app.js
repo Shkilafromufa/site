@@ -810,3 +810,31 @@ function scrollTopNow() {
   });
 }
 
+(function countUpOnce(){
+  const nums = [...document.querySelectorAll('.stat .number[data-target]')];
+  if (!nums.length) return;
+
+  const ease = t => 1 - Math.pow(1 - t, 3); // cubic out
+  const dur = 1100; // ms
+
+  const io = new IntersectionObserver((entries)=>{
+    entries.forEach(entry=>{
+      if (!entry.isIntersecting) return;
+      const el = entry.target; io.unobserve(el);
+
+      const target = parseFloat(el.dataset.target || '0');
+      const suffix = el.dataset.suffix || '';
+      const start = performance.now();
+
+      function frame(now){
+        const p = Math.min(1, (now - start)/dur);
+        const v = Math.round(ease(p)*target);
+        el.textContent = v + suffix;
+        if (p < 1) requestAnimationFrame(frame);
+      }
+      requestAnimationFrame(frame);
+    });
+  }, { threshold:.3 });
+
+  nums.forEach(n=>io.observe(n));
+})();

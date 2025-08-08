@@ -44,30 +44,7 @@
                 </div>
             </div>
 
-            <!-- Stats -->
-            <div class="stats">
-                <div class="container">
-                    <div class="stats-grid">
-                        <div class="stat">
-                            <span class="number">10+</span>
-                            <div class="label">лет опыта</div>
-                        </div>
-                        <div class="stat">
-                            <span class="number">98%</span>
-                            <div class="label">форм запускаются без доработок</div>
-                        </div>
-                        <div class="stat">
-                            <span class="number">24</span>
-                            <div class="label">часа на калькуляцию</div>
-                        </div>
-                        <div class="stat">
-                            <span class="number">500K+</span>
-                            <div class="label">циклов гарантии</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
+         
             <!-- Services -->
             <div class="services">
                 <div class="container">
@@ -247,28 +224,43 @@
             </div>
 
             <div class="stats">
-                <div class="container">
-                    <h2 class="section-title">Наши достижения</h2>
-                    <div class="stats-grid">
-                        <div class="stat">
-                            <span class="number">150+</span>
-                            <div class="label">выполненных проектов</div>
-                        </div>
-                        <div class="stat">
-                            <span class="number">50+</span>
-                            <div class="label">постоянных клиентов</div>
-                        </div>
-                        <div class="stat">
-                            <span class="number">24/7</span>
-                            <div class="label">техническая поддержка</div>
-                        </div>
-                        <div class="stat">
-                            <span class="number">5</span>
-                            <div class="label">недель срок изготовления</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+  <div class="container">
+    <div class="stats-grid">
+      <div class="stat">
+        <div class="top">
+          <div class="icon">⏳</div>
+          <span class="number" data-target="10">0</span>
+        </div>
+        <div class="label">лет опыта</div>
+      </div>
+
+      <div class="stat">
+        <div class="top">
+          <div class="icon">✅</div>
+          <span class="number" data-target="98" data-suffix="%">0</span>
+        </div>
+        <div class="label">форм без доработок</div>
+        <span class="trend up">+2% за год</span>
+      </div>
+
+      <div class="stat">
+        <div class="top">
+          <div class="icon">🧮</div>
+          <span class="number" data-target="24">0</span>
+        </div>
+        <div class="label">часа на калькуляцию</div>
+      </div>
+
+      <div class="stat">
+        <div class="top">
+          <div class="icon">🛡️</div>
+          <span class="number" data-target="500" data-suffix="K+">0</span>
+        </div>
+        <div class="label">циклов гарантии</div>
+      </div>
+    </div>
+  </div>
+</div>
         </section>
 
     <section id="admin" class="page-section">
