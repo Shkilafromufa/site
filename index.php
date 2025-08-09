@@ -281,7 +281,7 @@
                     <p>&copy; 2025. Все права защищены.</p>
                 </div>
                 <div>
-                <a href="#" class="btn accent" onclick="openPopup()">Связаться с нами</a>
+                <a href="#" class="btn accent-footer" onclick="openPopup()">Связаться с нами</a>
                 </div>
             </div>
         </div>
