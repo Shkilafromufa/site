@@ -333,29 +333,23 @@ img,video{ max-width:100%; display:block; }
   .fab-contact{ top:82px; right:12px; }
   .fab-contact .fab-label{ display:none; }
 }
-
+/* ========= STATS AT COMPANY ========= */
 .stats{ position:relative; padding:3rem 0; overflow:hidden; }
 .stats::after{ content:""; position:absolute; inset:0; pointer-events:none; opacity:.06; background:repeating-linear-gradient(135deg, transparent 0 14px, #fff 14px 15px); mix-blend-mode:overlay; }
-
 .stats-grid{ display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:1.25rem; }
-
 .stat{ position:relative; isolation:isolate; border:1px solid rgba(255,255,255,.10); border-radius:16px; padding:1.25rem 1.25rem 1.1rem; backdrop-filter:blur(6px); transition:transform .18s ease, box-shadow .22s ease, border-color .18s ease; }
 .stat:hover{ transform:translateY(-4px); border-color:rgba(255,255,255,.18); box-shadow:0 16px 36px rgba(0,0,0,.35); }
-
 .stat .top{ display:flex; align-items:center; gap:.75rem; margin-bottom:.35rem; }
 .stat .icon{ width:42px; height:42px; border-radius:12px; display:grid; place-items:center; flex:0 0 auto; background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.12); box-shadow:0 12px 28px rgba(0,0,0,.25); }
 .stat .number{ display:block; font-weight:800; font-size:clamp(1.8rem, 3.5vw, 2.6rem); line-height:1; color:#fff; letter-spacing:.01em; font-variant-numeric:tabular-nums; text-shadow:0 6px 24px rgba(0,0,0,.35); }
 .stat .label{ color:var(--gray); font-size:.95rem; margin-top:.35rem; }
-
 .trend{ display:inline-flex; align-items:center; gap:.35rem; font-size:.8rem; line-height:1; padding:.28rem .5rem; border-radius:999px; border:1px solid rgba(255,255,255,.16); background:rgba(0,0,0,.35); color:#eaeaea; }
 .trend.up{ border-color:rgba(0,200,81,.35); }
 .trend.down{ border-color:rgba(230,70,70,.35); }
-
 @media (max-width:640px){
   .stats{ padding:2.25rem 0; }
   .stat{ padding:1rem; }
 }
-
 @media (prefers-reduced-motion:reduce){
   .stat{ transition:none; }
 }
