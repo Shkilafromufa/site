@@ -11,17 +11,14 @@ function showPage(pageId) {
   document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
   const active = document.querySelector(`[data-page="${pageId}"]`);
   if (active) active.classList.add('active');
-}
-
-function toggleNav() {
-  document.getElementById('nav').classList.toggle('open');
+  closeNav(); 
 }
 
 document.querySelectorAll('.nav-link').forEach(link => {
   link.addEventListener('click', e => {
     e.preventDefault();
     showPage(link.getAttribute('data-page'));
-    document.getElementById('nav').classList.remove('open');
+    closeNav();
   });
 });
 
@@ -132,6 +129,12 @@ function toggleNav() {
   const nav = document.getElementById('nav');
   nav.classList.toggle('open');
   document.body.classList.toggle('nav-open', nav.classList.contains('open'));
+}
+function closeNav() {
+  const nav = document.getElementById('nav');
+  if (!nav) return;
+  nav.classList.remove('open');
+  document.body.classList.remove('nav-open');
 }
 function onCardClick(e){
   const card = e.target.closest('.card-link');
