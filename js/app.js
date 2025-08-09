@@ -811,6 +811,7 @@ document.addEventListener('keydown', (e) => {
 
 // Отправка формы (демо)
 drawerForm?.addEventListener('submit', async function(e){
+  
   e.preventDefault();
   const fd = new FormData(this);
   try {
@@ -824,6 +825,7 @@ drawerForm?.addEventListener('submit', async function(e){
     alert('Не удалось отправить сообщение. Попробуйте позже.');
   }
 });
+
 function scrollTopNow() {
   // двойной rAF — чтобы подождать отрисовку/изображения
   requestAnimationFrame(() => {
@@ -891,4 +893,114 @@ function bindStatsObserver() {
 document.addEventListener('DOMContentLoaded', () => {
   const active = document.querySelector('.page-section.active');
   if (active && active.id === 'about') bindStatsObserver();
+});
+// === Drawer file attach (robust: works with old HTML) ===
+document.addEventListener('DOMContentLoaded', () => {
+  const drop = document.getElementById('fileDrop');
+  if (!drop) return; // нет дропзоны — выходим
+
+  // 1) найдём/создадим input[type=file]
+  let input = drop.querySelector('#fileInput') || drop.querySelector('input[type="file"]');
+  if (!input) {
+    input = document.createElement('input');
+    input.type = 'file';
+    input.hidden = true;
+    drop.prepend(input);
+  }
+  // включим multiple и расширим accept (сохраним твой, если он был)
+  input.multiple = true;
+  const defaultAccept = '.dwg,.step,.igs,.stp,.dxf,.zip,.rar,.7z,.pdf';
+  if (!input.getAttribute('accept')) input.setAttribute('accept', defaultAccept);
+
+  // 2) список файлов: используем #fileList, а если его нет — создадим
+  let list = drop.querySelector('#fileList');
+  if (!list) {
+    list = document.createElement('div');
+    list.id = 'fileList';
+    list.className = 'file-list';
+    // если был старый #fileName — спрячем его
+    const legacy = drop.querySelector('#fileName');
+    if (legacy) legacy.style.display = 'none';
+    drop.appendChild(list);
+  }
+
+  // ——— helpers ———
+  const fmt = (b) => {
+    if (b == null) return '';
+    const u = ['Б','КБ','МБ','ГБ']; let i = 0; let n = b;
+    while (n >= 1024 && i < u.length - 1) { n /= 1024; i++; }
+    return `${n.toFixed(n < 10 ? 1 : 0)} ${u[i]}`;
+  };
+
+  function render(files) {
+    if (!list) return;
+    list.innerHTML = '';
+
+    const has = files && files.length;
+    drop.classList.toggle('has-files', !!has);
+    if (!has) return;
+
+    [...files].forEach((f, idx) => {
+      const item = document.createElement('div');
+      item.className = 'file-chip';
+      item.innerHTML = `
+        <span>📄</span>
+        <span class="name" title="${f.name}">${f.name}</span>
+        <span class="size">${fmt(f.size)}</span>
+        <button type="button" class="rm" aria-label="Удалить файл" data-i="${idx}">✕</button>
+      `;
+      list.appendChild(item);
+    });
+  }
+
+  function removeAt(index) {
+    const dt = new DataTransfer();
+    [...(input.files || [])].forEach((f, i) => { if (i !== index) dt.items.add(f); });
+    input.files = dt.files;
+    render(input.files);
+  }
+
+  // ——— events ———
+  input.addEventListener('change', () => {
+    render(input.files);
+    drop.classList.add('attached');
+    setTimeout(() => drop.classList.remove('attached'), 180);
+  });
+
+  list.addEventListener('click', (e) => {
+    const btn = e.target.closest('.rm');
+    if (!btn) return;
+  e.preventDefault();                     
+  e.stopPropagation();
+    removeAt(+btn.dataset.i);
+  });
+
+  ['dragenter','dragover'].forEach(ev => {
+    drop.addEventListener(ev, e => { e.preventDefault(); e.stopPropagation(); drop.classList.add('drag'); });
+  });
+  ['dragleave','dragend','drop'].forEach(ev => {
+    drop.addEventListener(ev, e => { e.preventDefault(); e.stopPropagation(); drop.classList.remove('drag'); });
+  });
+
+  drop.addEventListener('drop', (e) => {
+    const files = e.dataTransfer?.files;
+    if (!files || !files.length) return;
+    const dt = new DataTransfer();
+    [...(input.files || [])].forEach(f => dt.items.add(f));
+    [...files].forEach(f => dt.items.add(f));
+    input.files = dt.files;
+    render(input.files);
+    input.dispatchEvent(new Event('change', { bubbles:true }));
+  });
+
+  // клик по зоне (кроме кнопок удаления) — открыть диалог выбора
+  drop.addEventListener('click', (e) => {
+    if (e.target.closest('.rm')) {          // ← клик по кнопке «удалить»
+      e.preventDefault();
+      e.stopPropagation();
+      return;
+    }
+    if (drop.tagName === 'LABEL') return;   // label сам откроет диалог
+    input.click();
+  });
 });

@@ -367,7 +367,7 @@
 
             <!-- дропзона -->
             <label class="file-drop" id="fileDrop">
-                <input type="file" name="file" accept=".dwg,.step,.igs,.stp,.dxf,.zip,.rar,.7z,.pdf" hidden>
+            <input id="fileInput" type="file" name="files[]" accept=".dwg,.step,.igs,.stp,.dxf,.zip,.rar,.7z,.pdf" multiple hidden>
                 <div class="file-drop-inner">
                     <div class="file-ic">📎</div>
                     <div>
