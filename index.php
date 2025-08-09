@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ПрессФорм - Изготовление и ремонт пресс-форм</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/style-2.css">
     
 </head>
 <body>
@@ -189,7 +189,8 @@
                     <h2 class="section-title">Наша компания</h2>
                     <div class="about-grid">
   <div class="about-col">
-    <h3>Кто мы и чем сильны</h3><br>
+    <h3>Кто мы и чем сильны</h3>
+
     <p class="lead">Мы — команда инженеров-технологов, конструкторов и операторов ЧПУ, которая более десяти лет помогает производителям перейти от эскиза к серийному изделию.</p>
     <p>Берём на себя полный цикл: проектируем, производим, запускаем форму на площадке клиента, обучаем персонал и сопровождаем изделие весь жизненный цикл.</p><br>
     <ul class="about-facts">

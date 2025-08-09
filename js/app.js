@@ -1,17 +1,29 @@
 // Navigation
 function showPage(pageId) {
+  // если возвращаемся к списку — убираем #service/ID
   if (pageId === 'services' && location.hash) {
     history.replaceState(null, '', location.pathname + location.search);
   }
+
+  // переключение секций
   document.querySelectorAll('.page-section').forEach(p => p.classList.remove('active'));
   const sec = document.getElementById(pageId);
-  if (!sec) { console.warn('No section #'+pageId); return; }
+  if (!sec) { console.warn('No section #' + pageId); return; }
   sec.classList.add('active');
+
+  // запомним открытую вкладку
+  try { localStorage.setItem('lastPage', pageId); } catch (_) {}
+
+  // прокрутка вверх
   scrollTopNow();
+
+  // активная ссылка в навигации
   document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
   const active = document.querySelector(`[data-page="${pageId}"]`);
   if (active) active.classList.add('active');
-  closeNav(); 
+
+  // закрыть бургер-меню
+  closeNav();
 }
 
 document.querySelectorAll('.nav-link').forEach(link => {
@@ -247,6 +259,17 @@ legacyContactForm?.addEventListener('submit', function (e) {
 
 
 document.addEventListener('DOMContentLoaded', loadServices);
+document.addEventListener('DOMContentLoaded', () => {
+  handleHashOpen();
+
+  if (!location.hash) {
+    const last = (() => {
+      try { return localStorage.getItem('lastPage') || 'services'; } catch(_) { return 'services'; }
+    })();
+    const page = document.getElementById(last) ? last : 'services';
+    showPage(page);
+  }
+});
 
 var __popupEl = document.getElementById('popup');
 if (__popupEl) __popupEl.addEventListener('click', function (e) {
@@ -813,31 +836,59 @@ function scrollTopNow() {
   });
 }
 
-(function countUpOnce(){
-  const nums = [...document.querySelectorAll('.stat .number[data-target]')];
+let __statsDone = false;
+function animateStats(container) {
+  if (__statsDone) return;
+  __statsDone = true;
+
+  const nums = [...container.querySelectorAll('.stat .number[data-target]')];
   if (!nums.length) return;
 
-  const ease = t => 1 - Math.pow(1 - t, 3); // cubic out
-  const dur = 1100; // ms
+  const ease = t => 1 - Math.pow(1 - t, 3); 
+  const dur = 2100; 
 
-  const io = new IntersectionObserver((entries)=>{
-    entries.forEach(entry=>{
-      if (!entry.isIntersecting) return;
-      const el = entry.target; io.unobserve(el);
+  nums.forEach(el => {
+    const target = parseFloat(el.dataset.target || '0');
+    const suffix = el.dataset.suffix || '';
+    const start = performance.now();
+    function frame(now){
+      const p = Math.min(1, (now - start)/dur);
+      const v = Math.round(ease(p)*target);
+      el.textContent = v + suffix;
+      if (p < 1) requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+  });
+}
 
-      const target = parseFloat(el.dataset.target || '0');
-      const suffix = el.dataset.suffix || '';
-      const start = performance.now();
+let __statsObserver = null;
+function bindStatsObserver() {
+  if (__statsObserver || __statsDone) return;
+  const statsContainer = document.querySelector('#about .stats-grid');
+  if (!statsContainer) return;
 
-      function frame(now){
-        const p = Math.min(1, (now - start)/dur);
-        const v = Math.round(ease(p)*target);
-        el.textContent = v + suffix;
-        if (p < 1) requestAnimationFrame(frame);
+  __statsObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting && entry.intersectionRatio >= 0.35) {
+        animateStats(statsContainer);
+        __statsObserver?.disconnect();
+        __statsObserver = null;
       }
-      requestAnimationFrame(frame);
     });
-  }, { threshold:.3 });
+  }, { threshold: [0.35] });
 
-  nums.forEach(n=>io.observe(n));
+  __statsObserver.observe(statsContainer);
+}
+
+(function(){
+  const _show = showPage;
+  window.showPage = function(pageId){
+    _show(pageId);
+    if (pageId === 'about') bindStatsObserver();
+  };
 })();
+
+document.addEventListener('DOMContentLoaded', () => {
+  const active = document.querySelector('.page-section.active');
+  if (active && active.id === 'about') bindStatsObserver();
+});
