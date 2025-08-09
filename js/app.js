@@ -765,9 +765,11 @@ const drawerForm = document.getElementById('drawerContactForm');
 function openDrawer(){
   if (!drawer || !backdrop) return;
 
-  // фиксируем страницу
-  document.documentElement.classList.add('drawer-open');
-  document.body.classList.add('drawer-open');
+  const lockBody = !matchMedia('(hover: hover) and (pointer: fine)').matches;
+  if (lockBody) {
+    document.documentElement.classList.add('drawer-open');
+    document.body.classList.add('drawer-open');
+  }
 
   // двойной rAF: гарантируем, что браузер «увидит» стартовые стили
   requestAnimationFrame(() => {
