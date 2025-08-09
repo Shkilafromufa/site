@@ -90,7 +90,7 @@
 
             <div class="gallery">
                 <div class="container">
-                    <h2 class="section-title">Наши работы</h2>
+                    <h2 class="section-title">Цикл производства</h2>
 
                     <div class="inf-carousel" id="workCarousel" aria-label="Галерея работ" tabindex="0">
                         <button class="ic-btn prev" aria-label="Назад">‹</button>

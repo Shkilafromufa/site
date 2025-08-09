@@ -42,7 +42,7 @@ if ($method === 'GET') {
                  LIMIT 1
                ) AS cover
         FROM services s
-        ORDER BY s.id DESC
+        ORDER BY s.id ASC
     ";
     $stmt = $db->query($sql);
     $services = $stmt->fetchAll();
