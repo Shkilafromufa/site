@@ -307,3 +307,7 @@ img,video{ max-width:100%; display:block; }
 .portfolio-content h3{ margin:0 0 .5rem; font-size:1.3rem; color:var(--accent); }
 .portfolio-content p{ margin:0; color:var(--gray); font-size:.9rem; line-height:1.5; }
 @media (max-width:720px){ .portfolio-grid{ grid-template-columns:1fr; } }
+.feature-list li,
+.about-facts li {position: relative;padding-left: 1rem; /* отступ под кружок */list-style: none; /* убираем стандартный маркер */}
+.feature-list li::before,
+.about-facts li::before {content: "";position: absolute;left: 0;top: 0.55em; /* вертикальное центрирование относительно текста */width: 0.4rem;height: 0.4rem;border-radius: 50%;background: var(--accent);opacity: 0.85;}
