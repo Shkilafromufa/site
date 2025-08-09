@@ -280,6 +280,33 @@
     </div>
   </div>
 </div>
+
+<div class="container" style="padding: 1rem 0;">
+      <h2 class="section-title">Портфолио</h2>
+      <div class="portfolio-grid">
+        <div class="portfolio-item">
+          <img src="./a80bcfb4-a8cc-45ac-b103-c4f16c928741.png" alt="Проект 1" class="portfolio-img">
+          <div class="portfolio-content">
+            <h3>Литье пластикового корпуса</h3>
+            <p>Проект по изготовлению пресс‑формы для пластикового корпуса электронного устройства. Включал разработку 3D‑модели, производство и запуск на площадке клиента.</p>
+          </div>
+        </div>
+        <div class="portfolio-item">
+          <img src="./184f7034-807c-4d00-83cb-59153e048008.png" alt="Проект 2" class="portfolio-img">
+          <div class="portfolio-content">
+            <h3>Ремонт пресс‑формы</h3>
+            <p>Комплексный ремонт существующей пресс‑формы, включающий устранение износа рабочих поверхностей и модернизацию системы охлаждения для увеличения ресурса.</p>
+          </div>
+        </div>
+        <div class="portfolio-item">
+          <img src="./552f98b3-3ded-4519-8b29-6e6654729ead.png" alt="Проект 3" class="portfolio-img">
+          <div class="portfolio-content">
+            <h3>Проектирование формы для авто</h3>
+            <p>Разработка и изготовление пресс‑формы для крупногабаритной детали автомобильного интерьера. Использовались 5‑осевые станки и высокоточный контроль качества.</p>
+          </div>
+        </div>
+      </div>
+    </div>
         </section>
 
     <section id="admin" class="page-section">
