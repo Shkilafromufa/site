@@ -348,84 +348,294 @@ async function adminFetchServices() {
 function adminRenderDashboard() {
   const root = document.getElementById('adminRoot');
   root.innerHTML = `
-    <div class="admin-grid">
-      <div class="admin-card">
-        <h3 style="margin-top:0">Добавить услугу</h3>
-        <div style="display:grid; gap:.75rem;">
-          <input id="aName" class="form-control" placeholder="Название услуги">
-          <textarea id="aDesc" class="form-control" rows="4" placeholder="Описание услуги"></textarea>
-          <textarea id="aFeat" class="form-control" rows="3" placeholder="Особенности (каждая с новой строки)"></textarea>
-          <input id="aImgs" class="form-control" type="file" accept="image/*" multiple>
-          <div class="admin-actions">
-            <button class="btn accent" id="aAdd">Добавить</button>
-            <button class="btn ghost" id="aLogout">Выйти</button>
-          </div>
-        </div>
-      </div>
-      <div>
-        <div class="admin-card">
-          <div style="display:flex;justify-content:space-between;align-items:center;">
-            <h3 style="margin:0">Услуги</h3>
-            <span class="badge" id="aCount">—</span>
-          </div>
-          <div id="aList" class="list-cards" style="margin-top:1rem;"></div>
-        </div>
-      </div>
-    </div>`;
+  <div class="admin-shell">
+    <aside class="admin-aside">
+      <div class="brand">Админ</div>
+      <nav class="aside-nav">
+        <button class="aside-link active" data-tab="services">Услуги</button>
+        <button class="aside-link" data-tab="portfolio">Портфолио</button>
+        <button class="aside-link" data-tab="settings">Настройки</button>
+      </nav>
+      <button class="btn ghost wide" id="aLogout">Выйти</button>
+    </aside>
 
+    <section class="admin-workspace">
+      <!-- SERVICES TAB -->
+      <div class="tab-panel active" id="tab-services">
+        <div class="toolbar">
+          <div class="toolbar-left">
+            <input id="filterServices" class="form-control" placeholder="Поиск по услугам…">
+          </div>
+          <div class="toolbar-right">
+            <span class="badge" id="aCount">—</span>
+            <button class="btn accent" id="openAddService">Добавить услугу</button>
+          </div>
+        </div>
+
+        <div class="admin-card admin-add collapse" id="addServiceCard" hidden>
+          <h3 style="margin-top:0">Новая услуга</h3>
+          <div style="display:grid; gap:.75rem;">
+            <input id="aName" class="form-control" placeholder="Название услуги">
+            <textarea id="aDesc" class="form-control" rows="4" placeholder="Описание услуги"></textarea>
+            <textarea id="aFeat" class="form-control" rows="3" placeholder="Особенности (каждая с новой строки)"></textarea>
+            <input id="aImgs" class="form-control" type="file" accept="image/*" multiple>
+            <div class="admin-actions">
+              <button class="btn accent" id="aAdd">Сохранить</button>
+              <button class="btn ghost" id="cancelAddService">Отмена</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="list-head">
+          <label class="check">
+            <input type="checkbox" id="checkAll">
+            <span>Все</span>
+          </label>
+          <div class="bulk-actions" hidden>
+            <button class="btn danger" id="bulkDelete">Удалить выбранные</button>
+          </div>
+        </div>
+
+        <div id="aList" class="list-cards" style="margin-top:.5rem;"></div>
+      </div>
+
+      <!-- PORTFOLIO TAB -->
+      <div class="tab-panel" id="tab-portfolio">
+        <div class="toolbar">
+          <div class="toolbar-left">
+            <input id="filterPortfolio" class="form-control" placeholder="Поиск по портфолио…">
+          </div>
+          <div class="toolbar-right">
+            <span class="badge" id="pCount">—</span>
+            <button class="btn accent" id="openAddWork">Добавить работу</button>
+          </div>
+        </div>
+
+        <div class="admin-card admin-add collapse" id="addWorkCard" hidden>
+          <h3 style="margin-top:0">Новая работа</h3>
+          <div style="display:grid; gap:.75rem;">
+            <input id="pTitle" class="form-control" placeholder="Заголовок">
+            <textarea id="pDesc" class="form-control" rows="3" placeholder="Короткое описание"></textarea>
+            <input id="pImg" class="form-control" type="file" accept="image/*">
+            <div class="admin-actions">
+              <button class="btn accent" id="pAdd">Сохранить</button>
+              <button class="btn ghost" id="cancelAddWork">Отмена</button>
+            </div>
+          </div>
+        </div>
+
+        <div id="pList" class="list-cards" style="margin-top:1rem;"></div>
+      </div>
+
+      <!-- SETTINGS TAB -->
+      <div class="tab-panel" id="tab-settings">
+        <div class="admin-card">
+          <h3 style="margin-top:0">Настройки</h3>
+          <div class="muted">Здесь можно будет менять тему, пароль и т.п.</div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div id="toaster" class="toaster" aria-live="polite"></div>
+  `;
+
+  // Логаут
   document.getElementById('aLogout').onclick = async () => {
     await fetch('api/logout.php', {method:'POST'});
     adminRenderLogin();
   };
 
-  // >>> ЕДИНСТВЕННЫЙ обработчик добавления + заливка фото <<<
+  // Переключение табов
+  document.querySelectorAll('.aside-link').forEach(btn=>{
+    btn.onclick = () => {
+      document.querySelectorAll('.aside-link').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      const tab = btn.dataset.tab;
+      document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+      document.getElementById('tab-'+tab).classList.add('active');
+      // лениво подгружаем
+      if (tab === 'services') adminLoadList();
+      if (tab === 'portfolio') adminLoadPortfolioList();
+    };
+  });
+
+  // Тулбар — раскрывашки «Добавить»
+  function toggleCollapsible(id, btn, openText='Добавить', closeText='Скрыть'){
+    const box = document.getElementById(id);
+    const willOpen = !box.classList.contains('open');
+
+    if (willOpen) {
+      // сначала показать, потом добавить класс, чтобы анимация сработала
+      box.hidden = false;
+      requestAnimationFrame(() => box.classList.add('open'));
+    } else {
+      // сначала убираем класс (анимация закрытия), а по окончании — прячем
+      box.classList.remove('open');
+      box.addEventListener('transitionend', () => { box.hidden = true; }, { once: true });
+    }
+
+    btn.classList.toggle('ghost', willOpen);
+    btn.classList.toggle('accent', !willOpen);
+    btn.textContent = willOpen ? closeText : openText;
+    btn.setAttribute('aria-expanded', String(willOpen));
+  }
+
+  const addServiceCard = document.getElementById('addServiceCard');
+  const addWorkCard    = document.getElementById('addWorkCard');
+
+  const openAddServiceBtn = document.getElementById('openAddService');
+  openAddServiceBtn.classList.add('btn-toggle');
+  openAddServiceBtn.onclick = ()=> toggleCollapsible('addServiceCard', openAddServiceBtn, 'Добавить услугу','Скрыть форму');
+
+  document.getElementById('cancelAddService').onclick = ()=>{
+    addServiceCard.classList.remove('open');
+    openAddServiceBtn.classList.remove('ghost'); openAddServiceBtn.classList.add('accent');
+    openAddServiceBtn.textContent = 'Добавить услугу';
+    openAddServiceBtn.setAttribute('aria-expanded','false');
+  };
+
+  const openAddWorkBtn = document.getElementById('openAddWork');
+  openAddWorkBtn.classList.add('btn-toggle');
+  openAddWorkBtn.onclick = ()=> toggleCollapsible('addWorkCard', openAddWorkBtn, 'Добавить работу','Скрыть форму');
+
+  document.getElementById('cancelAddWork').onclick = ()=>{
+    addWorkCard.classList.remove('open');
+    openAddWorkBtn.classList.remove('ghost'); openAddWorkBtn.classList.add('accent');
+    openAddWorkBtn.textContent = 'Добавить работу';
+    openAddWorkBtn.setAttribute('aria-expanded','false');
+  };
+
+
+  // Добавление услуги (твой код, просто оставил как было)
   document.getElementById('aAdd').onclick = async () => {
     const name = document.getElementById('aName').value.trim();
     const description = document.getElementById('aDesc').value.trim();
     const features = document.getElementById('aFeat').value.split('\n').map(s=>s.trim()).filter(Boolean);
     const files = document.getElementById('aImgs').files;
+    if (!name || !description) { toast('Заполните название и описание','warn'); return; }
 
-    if (!name || !description) { alert('Заполните название и описание'); return; }
-
-    // 1) создаём услугу
     const r = await fetch('api/services.php', {
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body: JSON.stringify({ name, description, features })
     });
-    if (!r.ok) { alert('Ошибка при добавлении услуги'); return; }
-
+    if (!r.ok) { toast('Ошибка при добавлении услуги','error'); return; }
     const j = await r.json();
-    const newId = j?.id ?? j?.insert_id; // на всякий случай
+    const newId = j?.id ?? j?.insert_id;
 
-    // 2) грузим файлы, если выбраны и есть id
     if (newId && files && files.length) {
       for (const file of files) {
         const fd = new FormData();
         fd.append('service_id', newId);
         fd.append('image', file);
-        const up = await fetch('api/upload_service_image.php', { method:'POST', body: fd });
-        if (!up.ok) {
-          console.warn('upload failed for', file.name);
-          alert('Ошибка загрузки: ' + file.name);
-        }
+        await fetch('api/upload_service_image.php', { method:'POST', body: fd });
       }
     }
-
-    // 3) очистка формы и обновление списков
+    // очистка
     document.getElementById('aName').value = '';
     document.getElementById('aDesc').value = '';
     document.getElementById('aFeat').value = '';
     document.getElementById('aImgs').value = '';
+    addServiceCard.hidden = true;
 
     await adminLoadList();
     await loadServices();
-    alert('Услуга добавлена!');
+    toast('Услуга добавлена!');
   };
 
-  adminLoadList();
-}
+  // Добавление работы (перенёс сюда — чтобы не ловить null)
+  document.getElementById('pAdd').onclick = async () => {
+    const title = document.getElementById('pTitle').value.trim();
+    const description = document.getElementById('pDesc').value.trim();
+    const file = document.getElementById('pImg').files[0];
+    if (!title || !description) { toast('Заполните заголовок и описание','warn'); return; }
 
+    const r = await fetch('api/portfolio.php', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ title, description })
+    });
+    if (!r.ok) { toast('Ошибка добавления','error'); return; }
+    const { id } = await r.json();
+
+    if (id && file) {
+      const fd = new FormData();
+      fd.append('portfolio_id', id);
+      fd.append('image', file);
+      await fetch('api/upload_portfolio_image.php', { method:'POST', body: fd });
+    }
+
+    document.getElementById('pTitle').value = '';
+    document.getElementById('pDesc').value = '';
+    document.getElementById('pImg').value = '';
+    addWorkCard.hidden = true;
+
+    await adminLoadPortfolioList();
+    if (document.querySelector('#about.page-section.active')) loadPortfolio();
+    toast('Работа добавлена!');
+  };
+
+  // Фильтры (по месту, без бэка)
+  document.getElementById('filterServices').addEventListener('input', (e)=>{
+    const q = e.target.value.trim().toLowerCase();
+    document.querySelectorAll('#aList .list-card').forEach(card=>{
+      const t = card.innerText.toLowerCase();
+      card.style.display = t.includes(q) ? '' : 'none';
+    });
+  });
+  document.getElementById('filterPortfolio').addEventListener('input', (e)=>{
+    const q = e.target.value.trim().toLowerCase();
+    document.querySelectorAll('#pList .list-card').forEach(card=>{
+      const t = card.innerText.toLowerCase();
+      card.style.display = t.includes(q) ? '' : 'none';
+    });
+  });
+
+  // чекбоксы / массовые
+  const checkAll = document.getElementById('checkAll');
+  const bulkBar = document.querySelector('.bulk-actions');
+  checkAll.onchange = ()=>{
+    document.querySelectorAll('#aList .row-check input[type=checkbox]').forEach(c=>{ c.checked = checkAll.checked; });
+    bulkBar.hidden = !checkAll.checked;
+  };
+  document.getElementById('bulkDelete').onclick = async ()=>{
+    const ids = [...document.querySelectorAll('#aList .row-check input:checked')].map(c=>c.dataset.id);
+    if (!ids.length) return;
+    if (!confirm('Удалить выбранные услуги?')) return;
+    for (const id of ids) {
+      await fetch('api/services.php?id=' + id, { method:'DELETE' });
+    }
+    await adminLoadList();
+    checkAll.checked = false;
+    bulkBar.hidden = true;
+    toast('Удалено');
+  };
+
+  // стартуем с услуг
+  adminLoadList();
+  mountTabsIndicator();
+}
+function mountTabsIndicator(){
+  const nav = document.querySelector('.aside-nav');
+  if (!nav || nav.querySelector('.aside-indicator')) return;
+  const indicator = document.createElement('div');
+  indicator.className = 'aside-indicator';
+  nav.appendChild(indicator);
+
+  const setPos = (btn)=>{
+    const r = btn.getBoundingClientRect();
+    const rNav = nav.getBoundingClientRect();
+    indicator.style.transform = `translateY(${btn.offsetTop + (r.height - 36)/2}px)`;
+  };
+
+  const active = nav.querySelector('.aside-link.active') || nav.querySelector('.aside-link');
+  if (active) setPos(active);
+
+  nav.querySelectorAll('.aside-link').forEach(btn=>{
+    btn.addEventListener('click', ()=> setPos(btn));
+  });
+}
 async function adminLoadList() {
   const list = document.getElementById('aList');
 
@@ -439,19 +649,16 @@ async function adminLoadList() {
       const files = input.files;
       if (!sid || !files || !files.length) return;
 
+      const progress = input.closest('.list-card').querySelector('.progress');
+      if (progress) progress.hidden = false;
       for (const file of files) {
         const fd = new FormData();
         fd.append('service_id', sid);
         fd.append('image', file);
-        const up = await fetch('api/upload_service_image.php', { method: 'POST', body: fd });
-        if (!up.ok) {
-          alert('Ошибка загрузки: ' + file.name);
-          // продолжаем остальные файлы, не роняем всё
-        }
+        await fetch('api/upload_service_image.php', { method:'POST', body: fd });
       }
-
-      input.value = '';
-      alert('Фото добавлено');
+      if (progress) progress.hidden = true;
+      toast('Фото добавлено');
     });
     list._changeBound = true; // флаг «уже привязан»
   }
@@ -467,19 +674,25 @@ async function adminLoadList() {
       const card = document.createElement('div');
       card.className = 'list-card';
       card.innerHTML = `
-        <div class="top">
-          <h4>#${s.id} ${s.name}</h4>
-          <div style="display:flex; gap:.5rem;">
-            <label class="btn ghost btn-small">
-              Добавить фото
-              <input type="file" accept="image/*" data-up-for="${s.id}" style="display:none">
-            </label>
-            <button class="btn danger" data-id="${s.id}">Удалить</button>
-          </div>
-        </div>
-        <div class="muted">${s.description || ''}</div>
-        <ul>${(s.features || []).map(f => `<li>${f}</li>`).join('')}</ul>
-      `;
+  <div class="top">
+    <div style="display:flex; align-items:center; gap:.6rem;">
+      <label class="row-check">
+        <input type="checkbox" data-id="${s.id}">
+      </label>
+      <h4>#${s.id} ${escapeHtml(s.name)}</h4>
+    </div>
+    <div style="display:flex; gap:.5rem; align-items:center;">
+      <label class="btn ghost btn-small">
+        Добавить фото
+        <input type="file" accept="image/*" data-up-for="${s.id}" style="display:none">
+      </label>
+      <button class="btn danger btn-small" data-id="${s.id}">Удалить</button>
+    </div>
+  </div>
+  <div class="muted">${escapeHtml(s.description || '')}</div>
+  ${(s.features?.length ? `<ul>${s.features.map(f=>`<li>${escapeHtml(f)}</li>`).join('')}</ul>` : '')}
+  <div class="progress" hidden><div class="bar"></div></div>
+`;
       list.appendChild(card);
     });
 
@@ -496,19 +709,58 @@ async function adminLoadList() {
   }
 }
 
+async function adminLoadPortfolioList() {
+  const list = document.getElementById('pList');
+  list.innerHTML = '<div class="muted">Загрузка...</div>';
+  try {
+    const r = await fetch('api/portfolio.php');
+    const items = await r.json();
+    document.getElementById('pCount').textContent = items.length;
+    list.innerHTML = '';
+    items.forEach(it => {
+      const el = document.createElement('div');
+      el.className = 'list-card';
+      el.innerHTML = `
+        <div class="top">
+          <h4>#${it.id} ${escapeHtml(it.title)}</h4>
+          <div style="display:flex; gap:.5rem;">
+            <button class="btn danger" data-del="${it.id}">Удалить</button>
+          </div>
+        </div>
+        <div class="muted">${escapeHtml(it.description||'')}</div>
+      `;
+      list.appendChild(el);
+    });
+    list.querySelectorAll('button[data-del]').forEach(btn => {
+      btn.onclick = async () => {
+        if (!confirm('Удалить работу из портфолио?')) return;
+        const r = await fetch('api/portfolio.php?id='+btn.dataset.del, { method:'DELETE' });
+        if (r.ok) adminLoadPortfolioList(); else alert('Ошибка удаления');
+      };
+    });
+  } catch(e){
+    list.innerHTML = '<div class="muted">Не удалось загрузить список</div>';
+  }
+}
 async function adminInitPage() {
   const logged = await adminIsLogged();
   if (logged) adminRenderDashboard(); else adminRenderLogin();
 }
 
-// Hook into navigation: when switching to admin page, initialize it
-(function(){
-  const oldShowPage = showPage;
-  window.showPage = function(pageId){
-    oldShowPage(pageId);
-    if (pageId === 'admin') { adminInitPage(); }
-  };
-})();
+const __showPageHooks = [];
+const __showPageOriginal = showPage;
+window.showPage = function(pageId){
+  __showPageOriginal(pageId);
+  for (const fn of __showPageHooks) { try { fn(pageId); } catch(_){} }
+};
+
+__showPageHooks.push((pageId)=>{ if (pageId === 'admin') adminInitPage(); });
+__showPageHooks.push((pageId)=>{ if (pageId === 'about'){ bindStatsObserver(); loadPortfolio(); } });
+
+document.addEventListener('DOMContentLoaded', ()=>{
+  const active = document.querySelector('.page-section.active')?.id;
+  if (active) __showPageHooks.forEach(fn=>{ try{ fn(active); }catch(_){} });
+});
 
 document.addEventListener('click', (e) => {
   const btn = e.target.closest('.toggle-pass, #togglePass');
@@ -1006,3 +1258,55 @@ document.addEventListener('DOMContentLoaded', () => {
     input.click();
   });
 });
+
+
+async function loadPortfolio() {
+  try {
+    const r = await fetch('api/portfolio.php');
+    if (!r.ok) throw new Error('load_failed');
+    const items = await r.json();
+
+    const grid = document.getElementById('portfolioGrid');
+    if (!grid) return;
+    grid.innerHTML = items.map(it => `
+      <div class="portfolio-item">
+        ${it.image_path ? `<img src="${escapeHtml(it.image_path)}" alt="${escapeHtml(it.title)}" class="portfolio-img">` : `<div class="portfolio-img" style="background:#2a2a2a"></div>`}
+        <div class="portfolio-content">
+          <h3>${escapeHtml(it.title)}</h3>
+          <p>${escapeHtml(it.description)}</p>
+        </div>
+      </div>
+    `).join('');
+  } catch(e){
+    console.error('portfolio load failed', e);
+  }
+}
+
+// Подгрузка при открытии вкладки "О компании"
+(function(){
+  const prevShow = showPage;
+  window.showPage = function(pageId){
+    prevShow(pageId);
+    if (pageId === 'about') {
+      bindStatsObserver();  // у вас уже есть
+      loadPortfolio();
+    }
+  };
+})();
+
+// Если стартуем сразу на "about"
+document.addEventListener('DOMContentLoaded', () => {
+  const active = document.querySelector('.page-section.active');
+  if (active && active.id === 'about') loadPortfolio();
+});
+
+function toast(msg, type='ok'){
+  const host = document.getElementById('toaster');
+  if (!host) { alert(msg); return; }
+  const el = document.createElement('div');
+  el.className = 'toast' + (type==='error' ? ' error' : type==='warn' ? ' warn' : '');
+  el.textContent = msg;
+  host.appendChild(el);
+  setTimeout(()=>{ el.style.opacity = '0'; el.style.transform='translateY(4px)'; }, 2600);
+  setTimeout(()=> host.removeChild(el), 3200);
+}

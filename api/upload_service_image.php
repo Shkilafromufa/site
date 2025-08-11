@@ -44,7 +44,7 @@ $rel = '/uploads/services/' . $service_id . '/' . $fname; // <-- ведущий 
 
 /* сохранить запись */
 $stmt = $db->prepare('INSERT INTO service_images (service_id, path, alt) VALUES (?,?,?)');
-$stmt->execute([$service_id, $rel, $_POST['alt'] ?? '']);
+$stmt->execute([$service_id, $rel, isset($_POST['alt']) ? $_POST['alt'] : '']);
 
 /* вернуть JSON с id новой картинки и путём */
 echo json_encode(['status'=>'ok','path'=>$rel,'id'=>$db->lastInsertId()]);
