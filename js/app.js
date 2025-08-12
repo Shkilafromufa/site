@@ -378,7 +378,17 @@ function adminRenderDashboard() {
             <input id="aName" class="form-control" placeholder="Название услуги">
             <textarea id="aDesc" class="form-control" rows="4" placeholder="Описание услуги"></textarea>
             <textarea id="aFeat" class="form-control" rows="3" placeholder="Особенности (каждая с новой строки)"></textarea>
-            <input id="aImgs" class="form-control" type="file" accept="image/*" multiple>
+            <label class="file-drop" id="adminFileDrop">
+              <input id="aImgs" type="file" accept="image/*" multiple hidden>
+              <div class="file-drop-inner">
+                <div class="file-ic">📎</div>
+                <div>
+                  <div class="file-main">Перетащите фото сюда</div>
+                  <div class="file-sub">или нажмите, чтобы выбрать</div>
+                </div>
+              </div>
+              <div id="adminFileList" class="file-list"></div>
+            </label>
             <div class="admin-actions">
               <button class="btn accent" id="aAdd">Сохранить</button>
               <button class="btn ghost" id="cancelAddService">Отмена</button>
@@ -614,7 +624,105 @@ function adminRenderDashboard() {
 
   // стартуем с услуг
   adminLoadList();
-  mountTabsIndicator();
+  // Init file drop for admin (multiple files with chips, like in drawer)
+  const adminDrop = document.getElementById('adminFileDrop');
+  if (adminDrop) {
+    let input = adminDrop.querySelector('#aImgs') || adminDrop.querySelector('input[type="file"]');
+    if (!input) {
+      input = document.createElement('input');
+      input.type = 'file';
+      input.hidden = true;
+      adminDrop.prepend(input);
+    }
+    input.multiple = true;
+    const defaultAccept = '.dwg,.step,.igs,.stp,.dxf,.zip,.rar,.7z,.pdf';
+    if (!input.getAttribute('accept')) input.setAttribute('accept', defaultAccept);
+
+    let list = adminDrop.querySelector('#adminFileList');
+    if (!list) {
+      list = document.createElement('div');
+      list.id = 'adminFileList';
+      list.className = 'file-list';
+      const legacy = adminDrop.querySelector('#adminFileName');
+      if (legacy) legacy.style.display = 'none';
+      adminDrop.appendChild(list);
+    }
+
+    const fmt = (b) => {
+      if (b == null) return '';
+      const u = ['Б','КБ','МБ','ГБ']; let i = 0; let n = b;
+      while (n >= 1024 && i < u.length - 1) { n /= 1024; i++; }
+      return `${n.toFixed(n < 10 ? 1 : 0)} ${u[i]}`;
+    };
+
+    function render(files) {
+      if (!list) return;
+      list.innerHTML = '';
+      const has = files && files.length;
+      adminDrop.classList.toggle('has-files', !!has);
+      if (!has) return;
+      [...files].forEach((f, idx) => {
+        const item = document.createElement('div');
+        item.className = 'file-chip';
+        item.innerHTML = `
+        <span>📄</span>
+        <span class="name" title="${f.name}">${f.name}</span>
+        <span class="size">${fmt(f.size)}</span>
+        <button type="button" class="rm" aria-label="Удалить файл" data-i="${idx}">✕</button>
+      `;
+        list.appendChild(item);
+      });
+    }
+
+    function removeAt(index) {
+      const dt = new DataTransfer();
+      [...(input.files || [])].forEach((f, i) => { if (i !== index) dt.items.add(f); });
+      input.files = dt.files;
+      render(input.files);
+    }
+
+    input.addEventListener('change', () => {
+      render(input.files);
+      adminDrop.classList.add('attached');
+      setTimeout(() => adminDrop.classList.remove('attached'), 180);
+    });
+
+    list.addEventListener('click', (e) => {
+      const btn = e.target.closest('.rm');
+      if (!btn) return;
+      e.preventDefault();
+      e.stopPropagation();
+      removeAt(+btn.dataset.i);
+    });
+
+    ['dragenter','dragover'].forEach(ev => {
+      adminDrop.addEventListener(ev, e => { e.preventDefault(); e.stopPropagation(); adminDrop.classList.add('drag'); });
+    });
+    ['dragleave','dragend','drop'].forEach(ev => {
+      adminDrop.addEventListener(ev, e => { e.preventDefault(); e.stopPropagation(); adminDrop.classList.remove('drag'); });
+    });
+
+    adminDrop.addEventListener('drop', (e) => {
+      const files = e.dataTransfer?.files;
+      if (!files || !files.length) return;
+      const dt = new DataTransfer();
+      [...(input.files || [])].forEach(f => dt.items.add(f));
+      [...files].forEach(f => dt.items.add(f));
+      input.files = dt.files;
+      render(input.files);
+      input.dispatchEvent(new Event('change', { bubbles:true }));
+    });
+
+    adminDrop.addEventListener('click', (e) => {
+      if (e.target.closest('.rm')) {
+        e.preventDefault();
+        e.stopPropagation();
+        return;
+      }
+      if (adminDrop.tagName === 'LABEL') return;
+      input.click();
+    });
+  }
 }
 function mountTabsIndicator(){
   const nav = document.querySelector('.aside-nav');

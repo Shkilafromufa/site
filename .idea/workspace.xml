@@ -5,37 +5,10 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="20ef6898-6101-443b-995e-316c9bf5074c" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/.idea/php.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/api/portfolio.php" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/api/upload_portfolio_image.php" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/uploads/services/11/263a875228fc5bf8.jpg" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/api/check_login.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/check_login.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/api/config.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/config.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/api/db.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/db.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/api/login.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/login.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/api/logout.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/logout.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/api/services.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/services.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/api/upload_service_image.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/upload_service_image.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/1.jpg" beforeDir="false" afterPath="$PROJECT_DIR$/assets/1.jpg" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/10.jpg" beforeDir="false" afterPath="$PROJECT_DIR$/assets/10.jpg" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/11.jpg" beforeDir="false" afterPath="$PROJECT_DIR$/assets/11.jpg" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/2.jpg" beforeDir="false" afterPath="$PROJECT_DIR$/assets/2.jpg" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/3.jpg" beforeDir="false" afterPath="$PROJECT_DIR$/assets/3.jpg" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/4.jpg" beforeDir="false" afterPath="$PROJECT_DIR$/assets/4.jpg" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/5.jpg" beforeDir="false" afterPath="$PROJECT_DIR$/assets/5.jpg" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/6.jpg" beforeDir="false" afterPath="$PROJECT_DIR$/assets/6.jpg" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/7.jpg" beforeDir="false" afterPath="$PROJECT_DIR$/assets/7.jpg" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/8.jpg" beforeDir="false" afterPath="$PROJECT_DIR$/assets/8.jpg" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/9.jpg" beforeDir="false" afterPath="$PROJECT_DIR$/assets/9.jpg" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/css/style-2.css" beforeDir="false" afterPath="$PROJECT_DIR$/css/style-2.css" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/css/style-3.css" beforeDir="false" afterPath="$PROJECT_DIR$/css/style-3.css" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/css/style-4.css" beforeDir="false" afterPath="$PROJECT_DIR$/css/style-4.css" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/css/style-loft.css" beforeDir="false" afterPath="$PROJECT_DIR$/css/style-loft.css" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/css/style.css" beforeDir="false" afterPath="$PROJECT_DIR$/css/style.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/index.php" beforeDir="false" afterPath="$PROJECT_DIR$/index.php" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/js/app.js" beforeDir="false" afterPath="$PROJECT_DIR$/js/app.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/uploads/services/10/e6749da5219a92d5.jpg" beforeDir="false" afterPath="$PROJECT_DIR$/uploads/services/10/e6749da5219a92d5.jpg" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/uploads/portfolio/1/7c19189c60677652.jpg" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -102,7 +75,7 @@
       <option name="presentableId" value="Default" />
       <updated>1754623036740</updated>
       <workItem from="1754623037809" duration="39805000" />
-      <workItem from="1754910725930" duration="3487000" />
+      <workItem from="1754910725930" duration="7208000" />
     </task>
     <servers />
   </component>
