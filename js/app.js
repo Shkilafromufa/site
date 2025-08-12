@@ -397,7 +397,7 @@ function adminRenderDashboard() {
         </div>
 
         <div class="list-head">
-          <label class="check">
+          <label class="row-check">
             <input type="checkbox" id="checkAll">
             <span>Все</span>
           </label>
@@ -517,7 +517,7 @@ function adminRenderDashboard() {
   };
 
 
-  // Добавление услуги (твой код, просто оставил как было)
+// Добавление услуги (твой код, просто оставил как было)
   document.getElementById('aAdd').onclick = async () => {
     const name = document.getElementById('aName').value.trim();
     const description = document.getElementById('aDesc').value.trim();
@@ -547,7 +547,7 @@ function adminRenderDashboard() {
     document.getElementById('aDesc').value = '';
     document.getElementById('aFeat').value = '';
     document.getElementById('aImgs').value = '';
-    addServiceCard.hidden = true;
+    toggleCollapsible('addServiceCard', openAddServiceBtn, 'Добавить услугу','Скрыть форму');
 
     await adminLoadList();
     await loadServices();
@@ -579,13 +579,12 @@ function adminRenderDashboard() {
     document.getElementById('pTitle').value = '';
     document.getElementById('pDesc').value = '';
     document.getElementById('pImg').value = '';
-    addWorkCard.hidden = true;
+    toggleCollapsible('addWorkCard', openAddWorkBtn, 'Добавить работу','Скрыть форму');
 
     await adminLoadPortfolioList();
     if (document.querySelector('#about.page-section.active')) loadPortfolio();
     toast('Работа добавлена!');
   };
-
   // Фильтры (по месту, без бэка)
   document.getElementById('filterServices').addEventListener('input', (e)=>{
     const q = e.target.value.trim().toLowerCase();

@@ -535,3 +535,18 @@ img,video{ max-width:100%; display:block; }
   opacity:1;
   transform: translateY(0);
 }
+.row-check input#checkAll:checked::before {
+  background: linear-gradient(135deg, #ff4d4d, #ff8080);
+  box-shadow: 0 4px 12px rgba(255, 0, 0, 0.35);
+}
+
+/* Опционально: красный при наведении */
+.row-check input#checkAll:hover {
+  border-color: rgba(255, 0, 0, 0.4);
+}
+
+/* Опционально: эффект при нажатии */
+.row-check input#checkAll:active {
+  transform: scale(0.96);
+  border-color: rgba(255, 0, 0, 0.6);
+}
