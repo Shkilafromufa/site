@@ -79,6 +79,22 @@ switch ($method) {
         http_response_code(201);
         echo json_encode(['id' => $newId]);
         break;
+    case 'PUT':
+    case 'PATCH':
+        parse_str($_SERVER['QUERY_STRING'] ?? '', $q);
+        $id = (int)($q['id'] ?? 0);
+        if (!$id) { http_response_code(400); echo json_encode(['error'=>'bad_id']); exit; }
+
+        $data = json_decode(file_get_contents('php://input'), true) ?? [];
+        $stmt = $db->prepare('UPDATE services SET name = ?, description = ?, features = ? WHERE id = ?');
+        $stmt->execute([
+            $data['name'] ?? '',
+            $data['description'] ?? '',
+            json_encode($data['features'] ?? []),
+            $id
+        ]);
+        echo json_encode(['status'=>'ok']);
+        break;
 
     case 'DELETE':
         $id = (int)($_GET['id'] ?? 0);

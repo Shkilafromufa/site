@@ -8,7 +8,18 @@ session_start();
 
 switch ($method) {
     case 'GET':
-        // Список карточек портфолио (свежие первыми)
+        // Деталь
+        if (isset($_GET['id'])) {
+            $id = (int)$_GET['id'];
+            if ($id < 1) { http_response_code(400); echo json_encode(['error'=>'bad_id']); break; }
+            $stmt = $db->prepare("SELECT id, title, description, image_path FROM portfolio_items WHERE id=?");
+            $stmt->execute([$id]);
+            $row = $stmt->fetch();
+            if (!$row) { http_response_code(404); echo json_encode(['error'=>'not_found']); break; }
+            echo json_encode($row);
+            break;
+        }
+        // Список (свежие первыми)
         $stmt = $db->query("SELECT id, title, description, image_path FROM portfolio_items ORDER BY id DESC");
         echo json_encode($stmt->fetchAll());
         break;
@@ -23,6 +34,19 @@ switch ($method) {
         $stmt = $db->prepare("INSERT INTO portfolio_items (title, description, image_path) VALUES (?,?, '')");
         $stmt->execute([$title, $desc]);
         echo json_encode(['id' => (int)$db->lastInsertId()]);
+        break;
+
+    case 'PUT':
+    case 'PATCH':
+        if (empty($_SESSION['admin'])) { http_response_code(403); echo json_encode(['error'=>'forbidden']); break; }
+        $id = (int)($_GET['id'] ?? 0);
+        if ($id < 1) { http_response_code(400); echo json_encode(['error'=>'bad_id']); break; }
+        $data = json_decode(file_get_contents('php://input'), true) ?? [];
+        $title = trim($data['title'] ?? '');
+        $desc  = trim($data['description'] ?? '');
+        $stmt = $db->prepare("UPDATE portfolio_items SET title=?, description=? WHERE id=?");
+        $stmt->execute([$title, $desc, $id]);
+        echo json_encode(['status'=>'ok']);
         break;
 
     case 'DELETE':

@@ -550,3 +550,9 @@ img,video{ max-width:100%; display:block; }
   transform: scale(0.96);
   border-color: rgba(255, 0, 0, 0.6);
 }
+/* мини-превью */
+.thumb{
+  width:56px; height:40px; object-fit:cover; border-radius:6px;
+  border:1px solid rgba(255,255,255,.12); background:#222;
+}
+.thumb--ph{ width:56px; height:40px; border-radius:6px; border:1px dashed rgba(255,255,255,.15);}

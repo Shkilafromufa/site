@@ -786,6 +786,7 @@ async function adminLoadList() {
       <label class="row-check">
         <input type="checkbox" data-id="${s.id}">
       </label>
+      ${s.cover ? `<img class="thumb" src="${escapeHtml(s.cover)}" alt="" />` : `<div class="thumb thumb--ph" aria-hidden="true"></div>`}
       <h4>#${s.id} ${escapeHtml(s.name)}</h4>
     </div>
     <div style="display:flex; gap:.5rem; align-items:center;">
@@ -793,6 +794,7 @@ async function adminLoadList() {
         Добавить фото
         <input type="file" accept="image/*" data-up-for="${s.id}" style="display:none">
       </label>
+      <button class="btn btn-small" data-edit="${s.id}">Редактировать</button>
       <button class="btn danger btn-small" data-id="${s.id}">Удалить</button>
     </div>
   </div>
@@ -811,6 +813,10 @@ async function adminLoadList() {
         if (r.ok) adminLoadList(); else alert('Ошибка удаления');
       };
     });
+    list.querySelectorAll('button[data-edit]').forEach(btn => {
+      btn.onclick = () => openServiceEditor(+btn.dataset.edit);
+    });
+
   } catch (e) {
     list.innerHTML = '<div class="muted">Не удалось загрузить список</div>';
   }
@@ -828,14 +834,19 @@ async function adminLoadPortfolioList() {
       const el = document.createElement('div');
       el.className = 'list-card';
       el.innerHTML = `
-        <div class="top">
+      <div class="top">
+        <div style="display:flex; align-items:center; gap:.6rem;">
+          ${it.image_path ? `<img class="thumb" src="${escapeHtml(it.image_path)}" alt="">`
+              : `<div class="thumb thumb--ph" aria-hidden="true"></div>`}
           <h4>#${it.id} ${escapeHtml(it.title)}</h4>
-          <div style="display:flex; gap:.5rem;">
-            <button class="btn danger" data-del="${it.id}">Удалить</button>
-          </div>
         </div>
-        <div class="muted">${escapeHtml(it.description||'')}</div>
-      `;
+        <div style="display:flex; gap:.5rem;">
+          <button class="btn btn-small" data-edit="${it.id}">Редактировать</button>
+          <button class="btn danger btn-small" data-del="${it.id}">Удалить</button>
+        </div>
+      </div>
+      <div class="muted">${escapeHtml(it.description||'')}</div>
+    `;
       list.appendChild(el);
     });
     list.querySelectorAll('button[data-del]').forEach(btn => {
@@ -844,6 +855,9 @@ async function adminLoadPortfolioList() {
         const r = await fetch('api/portfolio.php?id='+btn.dataset.del, { method:'DELETE' });
         if (r.ok) adminLoadPortfolioList(); else alert('Ошибка удаления');
       };
+    });
+    list.querySelectorAll('button[data-edit]').forEach(btn => {
+      btn.onclick = () => openPortfolioEditor(+btn.dataset.edit);
     });
   } catch(e){
     list.innerHTML = '<div class="muted">Не удалось загрузить список</div>';
@@ -1416,4 +1430,248 @@ function toast(msg, type='ok'){
   host.appendChild(el);
   setTimeout(()=>{ el.style.opacity = '0'; el.style.transform='translateY(4px)'; }, 2600);
   setTimeout(()=> host.removeChild(el), 3200);
+}
+
+(function ensureModalHost(){
+  if (document.getElementById('modalHost')) return;
+  const host = document.createElement('div');
+  host.id = 'modalHost';
+  host.innerHTML = `
+    <div class="modal-backdrop" data-close="1"></div>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <header class="modal-head">
+        <h3 id="modalTitle"></h3>
+        <button class="icon-btn" data-close="1" aria-label="Закрыть">✕</button>
+      </header>
+      <div class="modal-body"></div>
+      <footer class="modal-foot">
+        <button class="btn ghost" data-close="1">Отмена</button>
+        <button class="btn accent" id="modalSave">Сохранить</button>
+      </footer>
+    </div>
+  `;
+  document.body.appendChild(host);
+  host.addEventListener('click', (e)=>{
+    if (e.target.closest('[data-close]')) closeModal();
+  });
+})();
+function openModal({title, bodyHTML, onSave}){
+  const host = document.getElementById('modalHost');
+  host.querySelector('#modalTitle').textContent = title || '';
+  host.querySelector('.modal-body').innerHTML = bodyHTML || '';
+  host.classList.add('open');
+  const saveBtn = host.querySelector('#modalSave');
+  saveBtn.onclick = async () => {
+    try{ await onSave?.(); closeModal(); toast('Сохранено'); }
+    catch(err){ console.error(err); toast('Ошибка сохранения','error'); }
+  };
+}
+function closeModal(){
+  const host = document.getElementById('modalHost');
+  host.classList.remove('open');
+}
+
+// ===== styles for modal =====
+(function injectModalCSS(){
+  if (document.getElementById('modalCSS')) return;
+  const s = document.createElement('style');
+  s.id = 'modalCSS';
+  s.textContent = `
+  #modalHost{ position:fixed; inset:0; display:none; z-index:4000; }
+  #modalHost.open{ display:block; }
+  #modalHost .modal-backdrop{ position:absolute; inset:0; background:rgba(0,0,0,.55); }
+  #modalHost .modal{
+    position:relative; z-index:1; width:min(840px,96vw);
+    margin:6vh auto; background:rgba(28,28,28,.95);
+    border:1px solid rgba(255,255,255,.08); border-radius:16px; overflow:hidden;
+    box-shadow:0 20px 60px rgba(0,0,0,.5);
+  }
+  .modal-head,.modal-foot{ display:flex; align-items:center; justify-content:space-between; gap:.6rem; padding:1rem; border-bottom:1px solid rgba(255,255,255,.06); }
+  .modal-foot{ border-top:1px solid rgba(255,255,255,.06); border-bottom:0; }
+  .modal-body{ padding:1rem; max-height:60vh; overflow:auto; display:grid; gap:.8rem; }
+  .modal .grid{ display:grid; gap:.75rem; grid-template-columns:1fr; }
+  .modal .row{ display:grid; gap:.4rem; }
+  .modal label{ font-size:.9rem; color:#cfcfcf; }
+  .modal .img-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(120px,1fr)); gap:.6rem; }
+  .modal .img-cell{ position:relative; }
+  .modal .img-cell img{ width:100%; aspect-ratio:4/3; object-fit:cover; border-radius:10px; border:1px solid rgba(255,255,255,.12); }
+  .modal .img-cell button{ position:absolute; top:6px; right:6px; }
+  `;
+  document.head.appendChild(s);
+})();
+
+async function openServiceEditor(id){
+  // грузим детально
+  const r = await fetch(`api/services.php?id=${id}`);
+  if (!r.ok) { toast('Не удалось загрузить услугу','error'); return; }
+  const s = await r.json();
+  const feats = (s.features||[]).join('\n');
+
+  openModal({
+    title: `Редактирование услуги #${id}`,
+    bodyHTML: `
+      <div class="grid">
+        <div class="row">
+          <label>Название</label>
+          <input id="seName" class="form-control" value="${escapeHtml(s.name||'')}" />
+        </div>
+        <div class="row">
+          <label>Описание</label>
+          <textarea id="seDesc" class="form-control" rows="5">${escapeHtml(s.description||'')}</textarea>
+        </div>
+        <div class="row">
+          <label>Особенности (по одной в строке)</label>
+          <textarea id="seFeat" class="form-control" rows="4">${escapeHtml(feats)}</textarea>
+        </div>
+
+        <div class="row">
+          <label>Галерея</label>
+          <div class="img-grid" id="seGallery">
+            ${(s.images||[]).map(img => `
+              <div class="img-cell" data-img-id="${img.id}">
+                <img src="${escapeHtml(img.path)}" alt="">
+                <button class="btn danger btn-small" data-del-img="${img.id}">Удалить</button>
+              </div>
+            `).join('')}
+          </div>
+          <label class="file-drop" id="seAddImgs">
+            <input id="seFiles" type="file" accept="image/*" multiple hidden>
+            <div class="file-drop-inner">
+              <div class="file-ic">📎</div>
+              <div><div class="file-main">Добавить фото</div><div class="file-sub">перетащите сюда или нажмите</div></div>
+            </div>
+            <div class="file-list" id="seFileList"></div>
+          </label>
+        </div>
+      </div>
+    `,
+    onSave: async () => {
+      const name  = document.getElementById('seName').value.trim();
+      const desc  = document.getElementById('seDesc').value.trim();
+      const feats = document.getElementById('seFeat').value.split('\n').map(s=>s.trim()).filter(Boolean);
+
+      // 1) обновим текстовые поля (PUT/PATCH)
+      const up = await fetch(`api/services.php?id=${id}`, {
+        method:'PUT',
+        headers:{ 'Content-Type':'application/json' },
+        body: JSON.stringify({ name, description: desc, features: feats })
+      });
+      if (!up.ok) throw new Error('update_failed');
+
+      // 2) загрузим новые картинки, если выбраны
+      const files = document.getElementById('seFiles').files;
+      if (files && files.length){
+        for (const f of files){
+          const fd = new FormData();
+          fd.append('service_id', id);
+          fd.append('image', f);
+          const ur = await fetch('api/upload_service_image.php', { method:'POST', body: fd });
+          if (!ur.ok) throw new Error('img_upload_failed');
+        }
+      }
+
+      await adminLoadList();
+      await loadServices();
+    }
+  });
+
+  // локальная обработка превью выбранных файлов
+  (function bindLocalFiles(){
+    const input = document.getElementById('seFiles');
+    const list  = document.getElementById('seFileList');
+    const fmt = (b)=>{ const u=['Б','КБ','МБ','ГБ']; let i=0,n=b; while(n>=1024&&i<u.length-1){n/=1024;i++;} return `${n.toFixed(n<10?1:0)} ${u[i]}`; };
+    const render = (files)=>{
+      list.innerHTML = '';
+      [...files].forEach((f,i)=>{
+        const div = document.createElement('div');
+        div.className = 'file-chip';
+        div.innerHTML = `<span>📄</span><span class="name">${f.name}</span><span class="size">${fmt(f.size)}</span><button class="rm" data-i="${i}">✕</button>`;
+        list.appendChild(div);
+      });
+    };
+    input?.addEventListener('change', ()=> render(input.files));
+    list?.addEventListener('click', (e)=>{
+      const btn = e.target.closest('.rm'); if(!btn) return;
+      const dt = new DataTransfer();
+      [...input.files].forEach((f,i)=>{ if(i!=btn.dataset.i) dt.items.add(f); });
+      input.files = dt.files; render(input.files);
+    });
+    document.getElementById('seAddImgs')?.addEventListener('click',(e)=>{
+      if (e.target.closest('.rm')) { e.preventDefault(); e.stopPropagation(); return; }
+      if (e.currentTarget.tagName !== 'LABEL') input.click();
+    });
+  })();
+
+  // удаление существующих изображений (потребуется небольшой PHP-эндпоинт, см. ниже)
+  const modalBody = document.querySelector('#modalHost .modal-body');
+  modalBody.onclick = async (e) => {
+    const btn = e.target.closest('[data-del-img]');
+    if (!btn) return;
+
+    if (!confirm('Удалить изображение?')) return;
+
+    const imgId = +btn.dataset.delImg;
+    const r = await fetch(`api/service_image.php?id=${imgId}`, { method:'DELETE' });
+    if (!r.ok){ toast('Не удалось удалить','error'); return; }
+
+    btn.closest('.img-cell')?.remove();
+  };
+}
+async function openPortfolioEditor(id){
+  // детальный запрос по портфолио
+  const r = await fetch(`api/portfolio.php?id=${id}`);
+  if (!r.ok){ toast('Не удалось загрузить элемент','error'); return; }
+  const p = await r.json();
+
+  openModal({
+    title:`Редактирование портфолио #${id}`,
+    bodyHTML: `
+      <div class="grid">
+        <div class="row">
+          <label>Заголовок</label>
+          <input id="peTitle" class="form-control" value="${escapeHtml(p.title||'')}">
+        </div>
+        <div class="row">
+          <label>Описание</label>
+          <textarea id="peDesc" class="form-control" rows="4">${escapeHtml(p.description||'')}</textarea>
+        </div>
+        <div class="row">
+          <label>Текущее изображение</label>
+          <div class="img-grid">
+            ${p.image_path ? `<div class="img-cell"><img src="${escapeHtml(p.image_path)}" alt=""></div>` : `<div class="muted">Нет изображения</div>`}
+          </div>
+        </div>
+        <div class="row">
+          <label>Заменить изображение</label>
+          <input id="peFile" type="file" accept="image/*" class="form-control">
+        </div>
+      </div>
+    `,
+    onSave: async ()=>{
+      const title = document.getElementById('peTitle').value.trim();
+      const desc  = document.getElementById('peDesc').value.trim();
+
+      // 1) текстовые поля
+      const up = await fetch(`api/portfolio.php?id=${id}`, {
+        method:'PUT',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ title, description: desc })
+      });
+      if (!up.ok) throw new Error('port_update_failed');
+
+      // 2) замена изображения (если выбрано)
+      const f = document.getElementById('peFile').files[0];
+      if (f){
+        const fd = new FormData();
+        fd.append('portfolio_id', id);
+        fd.append('image', f);
+        const ur = await fetch('api/upload_portfolio_image.php', { method:'POST', body: fd });
+        if (!ur.ok) throw new Error('port_img_failed');
+      }
+
+      await adminLoadPortfolioList();
+      // перерисуем публичную сетку, если вкладка «about» активна
+      if (document.querySelector('#about.page-section.active')) loadPortfolio();
+    }
+  });
 }
