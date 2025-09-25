@@ -13,17 +13,18 @@
     <header class="site-header">
         <div class="container flex-between">
             <div class="logo">Альтернатива</div>
-            <nav class="site-nav" id="nav">
+            <nav class="site-nav" id="nav" aria-label="Основная навигация">
                 <a href="#" data-page="services" class="nav-link active">Главная страница</a>
                 <a href="#" data-page="about" class="nav-link">О компании</a>
-<!--                <a href="#" data-page="contacts" class="nav-link">Контакты</a>-->
+                <a href="#" data-page="cases" class="nav-link">Кейсы и отзывы</a>
+                <a href="#" data-page="certs" class="nav-link">Сертификаты и партнёры</a>
                 <a href="#" data-page="admin" class="nav-link">Личный кабинет</a>
             </nav>
-            <div class="burger" onclick="toggleNav()">
+            <button class="burger" id="navToggle" type="button" aria-expanded="false" aria-controls="nav" aria-label="Переключить меню" onclick="toggleNav()">
                 <span></span>
                 <span></span>
                 <span></span>
-            </div>
+            </button>
         </div>
     </header>
 
@@ -49,7 +50,7 @@
             <div class="services">
                 <div class="container">
                     <h2 class="section-title">Наши услуги</h2>
-                    <div class="cards" id="services-container">
+                    <div class="cards" id="services-container" aria-live="polite">
                         <!-- Services will be loaded here -->
                     </div>
                 </div>
@@ -93,7 +94,7 @@
                     <h2 class="section-title">Цикл производства</h2>
 
                     <div class="inf-carousel" id="workCarousel" aria-label="Галерея работ" tabindex="0">
-                        <button class="ic-btn prev" aria-label="Назад">‹</button>
+                        <button class="ic-btn prev" type="button" aria-label="Назад">‹</button>
 
                         <div class="ic-track">
                             <!-- ОРИГИНАЛЬНЫЕ СЛАЙДЫ (без клонов; клоны добавит JS) -->
@@ -161,7 +162,7 @@
                             </article>
                         </div>
 
-                        <button class="ic-btn next" aria-label="Вперёд">›</button>
+                        <button class="ic-btn next" type="button" aria-label="Вперёд">›</button>
                         <div class="ic-dots" id="workDots" aria-label="Навигация"></div>
                     </div>
                 </div>
@@ -280,7 +281,166 @@
 </div>
             <div class="container" style="padding: 1rem 0;">
                 <h2 class="section-title">Портфолио</h2>
-                <div class="portfolio-grid" id="portfolioGrid"></div>
+                <div class="portfolio-grid" id="portfolioGrid" aria-live="polite"></div>
+            </div>
+        </section>
+
+        <section id="cases" class="page-section" aria-labelledby="casesTitle">
+            <div class="container">
+                <h2 class="section-title" id="casesTitle">Кейсы и отзывы</h2>
+                <div class="cases-grid">
+                    <article class="case-card">
+                        <header class="case-head">
+                            <span class="case-tag">Автопром</span>
+                            <h3>Сократили время запуска пресс-формы с 14 до 6 недель</h3>
+                        </header>
+                        <dl class="case-details">
+                            <div>
+                                <dt>Проблема</dt>
+                                <dd>Крупному автопроизводителю требовалась пресс-форма для панелей салона в сжатые сроки и с высоким классом поверхности.</dd>
+                            </div>
+                            <div>
+                                <dt>Решение</dt>
+                                <dd>Параллельное проектирование и производство узлов, цифровой двойник для проверки кинематики, ночные смены на 5-осевых станках.</dd>
+                            </div>
+                            <div>
+                                <dt>Результат</dt>
+                                <dd>Запуск пресс-формы на 8 недель раньше графика, отсутствие рекламаций в первые 50 000 циклов.</dd>
+                            </div>
+                        </dl>
+                        <blockquote class="case-quote">
+                            «Коллеги из Альтернативы сняли критическую задачу по срокам — мы смогли выйти в SOP вовремя и без доработок.»
+                            <cite>— Руководитель проекта, OEM-производитель</cite>
+                        </blockquote>
+                    </article>
+
+                    <article class="case-card">
+                        <header class="case-head">
+                            <span class="case-tag">Потребительская электроника</span>
+                            <h3>Повысили ресурс формы и снизили простой оборудования</h3>
+                        </header>
+                        <dl class="case-details">
+                            <div>
+                                <dt>Проблема</dt>
+                                <dd>Серийная форма для корпусов гаджетов требовала ремонта каждые 3 месяца и снижала эффективность линии.</dd>
+                            </div>
+                            <div>
+                                <dt>Решение</dt>
+                                <dd>Оптимизация системы охлаждения, замена материала вставок, внедрение сервиса предиктивного мониторинга.</dd>
+                            </div>
+                            <div>
+                                <dt>Результат</dt>
+                                <dd>Ресурс пресс-формы вырос в 2,4 раза, простой оборудования снизился на 37%.</dd>
+                            </div>
+                        </dl>
+                        <blockquote class="case-quote">
+                            «Теперь наши технологи планируют сервис не по авариям, а по данным. Это экономит десятки часов простаивания.»
+                            <cite>— Технический директор, производитель электроники</cite>
+                        </blockquote>
+                    </article>
+
+                    <article class="case-card">
+                        <header class="case-head">
+                            <span class="case-tag">Медицинская техника</span>
+                            <h3>Выполнили верификацию изделия под международные стандарты</h3>
+                        </header>
+                        <dl class="case-details">
+                            <div>
+                                <dt>Проблема</dt>
+                                <dd>Необходимо было адаптировать пресс-форму для деталей аппаратов ИВЛ под стандарты FDA и MDR.</dd>
+                            </div>
+                            <div>
+                                <dt>Решение</dt>
+                                <dd>Трассировка материалов, чистовые обработки в изолированной зоне, полная документация трассируемости и FAT-тесты.</dd>
+                            </div>
+                            <div>
+                                <dt>Результат</dt>
+                                <dd>Проект прошёл аудит с первого раза, партия изделий была сертифицирована для экспорта в ЕС и США.</dd>
+                            </div>
+                        </dl>
+                        <blockquote class="case-quote">
+                            «Команда взяла на себя не только механическую часть, но и бумажную — аудит прошёл без дополнительных запросов.»
+                            <cite>— Менеджер по качеству, медицинский холдинг</cite>
+                        </blockquote>
+                    </article>
+                </div>
+
+                <div class="testimonials" role="region" aria-labelledby="testimonialsTitle">
+                    <h3 id="testimonialsTitle">Что говорят клиенты</h3>
+                    <div class="testimonial-list">
+                        <figure class="testimonial-card">
+                            <blockquote>
+                                «Впервые видим, чтобы подрядчик на производстве приезжал с собственной командой наладчиков и доводил процесс до стабильного цикла.»
+                            </blockquote>
+                            <figcaption>
+                                <span class="author">Андрей Л., директор по производству</span>
+                                <span class="company">ПластикТех</span>
+                            </figcaption>
+                        </figure>
+                        <figure class="testimonial-card">
+                            <blockquote>
+                                «Они не просто отремонтировали форму, а подготовили инструкции по обслуживанию и обучили персонал смены.»
+                            </blockquote>
+                            <figcaption>
+                                <span class="author">Виктория П., руководитель пресс-цеха</span>
+                                <span class="company">Металформ</span>
+                            </figcaption>
+                        </figure>
+                        <figure class="testimonial-card">
+                            <blockquote>
+                                «Коммуникация прозрачная: еженедельные отчёты, общий чат, трекинг статусов деталей в MES.»
+                            </blockquote>
+                            <figcaption>
+                                <span class="author">Илья Д., менеджер проектов</span>
+                                <span class="company">InjecPro</span>
+                            </figcaption>
+                        </figure>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="certs" class="page-section" aria-labelledby="certsTitle">
+            <div class="container">
+                <h2 class="section-title" id="certsTitle">Сертификаты, партнёры и стандарты</h2>
+                <div class="certs-layout">
+                    <div class="certs-gallery" role="list">
+                        <article class="certificate-card" role="listitem">
+                            <img src="assets/cert-iso9001.svg" alt="Скан сертификата ISO 9001" loading="lazy">
+                            <h3>ISO 9001:2015</h3>
+                            <p>Система менеджмента качества подтверждена независимым аудитом.</p>
+                        </article>
+                        <article class="certificate-card" role="listitem">
+                            <img src="assets/cert-iso14001.svg" alt="Скан сертификата ISO 14001" loading="lazy">
+                            <h3>ISO 14001:2018</h3>
+                            <p>Экологический менеджмент и управление отходами на производстве.</p>
+                        </article>
+                        <article class="certificate-card" role="listitem">
+                            <img src="assets/cert-iatf16949.svg" alt="Скан сертификата IATF 16949" loading="lazy">
+                            <h3>IATF 16949</h3>
+                            <p>Сертифицированы для поставок в автопром по требованиям OEM.</p>
+                        </article>
+                    </div>
+
+                    <aside class="certs-meta" aria-label="Партнёры и отрасли">
+                        <div class="partners">
+                            <h3>Ключевые партнёры</h3>
+                            <ul>
+                                <li>GF Machining Solutions — оборудование для высокоточной обработки</li>
+                                <li>Uddeholm и Böhler — инструментальные стали премиум-класса</li>
+                                <li>Siemens NX и Mastercam — единая CAD/CAM-платформа</li>
+                            </ul>
+                        </div>
+                        <div class="sectors">
+                            <h3>Работаем по стандартам</h3>
+                            <ul>
+                                <li>GOST Р 57326-2016 — пресс-формы для литья пластмасс</li>
+                                <li>FDA CFR 21 part 820 — медицинские изделия</li>
+                                <li>AS 9100 — компоненты для авиационно-космической отрасли</li>
+                            </ul>
+                        </div>
+                    </aside>
+                </div>
             </div>
         </section>
 
