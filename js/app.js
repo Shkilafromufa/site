@@ -37,87 +37,375 @@ document.querySelectorAll('.nav-link').forEach(link => {
 // Services
 let services = [];
 
-async function loadServices() {
-  const res = await fetch('api/services.php');
-  if (!res.ok) { console.error('services list failed', res.status); return; }
-  services = await res.json();
-
+function renderServiceSkeletons(count = 6) {
   const container = document.getElementById('services-container');
+  if (!container) return;
   container.innerHTML = '';
-
-  // ПУЛ конкарренси, чтобы не убить сервер доп.запросами
-  const MAX_PARALLEL = 4;
-  let inFlight = 0, queue = [];
-
-  function withLimit(fn) {
-    return new Promise((resolve) => {
-      const run = async () => {
-        inFlight++;
-        try { resolve(await fn()); }
-        finally {
-          inFlight--;
-          if (queue.length) queue.shift()();
-        }
-      };
-      (inFlight < MAX_PARALLEL) ? run() : queue.push(run);
-    });
-  }
-
-  services.forEach((s, i) => {
-    const el = document.createElement('article');
-    el.className = 'service-card';
-    el.setAttribute('role', 'button');
-    el.setAttribute('tabindex', '0');
-    el.dataset.id = s.id;
-
-    // базовая верстка
-    el.innerHTML = `
-      <div class="shine"></div>
+  for (let i = 0; i < count; i++) {
+    const skeleton = document.createElement('article');
+    skeleton.className = 'service-card service-card--skeleton';
+    skeleton.setAttribute('aria-hidden', 'true');
+    skeleton.innerHTML = `
       <div class="glass">
-        <h3>${escapeHtml(s.name)}</h3>
-<p>${escapeHtml(trimDescription(s.description))}</p>
-        <div class="s-chips" data-chips></div>
+        <div class="skeleton-line skeleton-line--title"></div>
+        <div class="skeleton-line"></div>
+        <div class="skeleton-line short"></div>
+        <div class="skeleton-chip-row">
+          <span class="skeleton-chip"></span>
+          <span class="skeleton-chip"></span>
+          <span class="skeleton-chip"></span>
+        </div>
       </div>
     `;
+    container.appendChild(skeleton);
+  }
+}
 
-    // пока нет обложки — приятный градиент-заглушка (чтобы не прыгало)
-    const fallback = `linear-gradient(135deg, rgba(255,173,0,.18), rgba(95,169,255,.18)), linear-gradient(135deg, #2a2a2a, #1e1e1e)`;
-    el.style.setProperty('--bg', fallback);
+function renderPortfolioSkeletons(count = 4) {
+  const grid = document.getElementById('portfolioGrid');
+  if (!grid) return;
+  grid.innerHTML = '';
+  for (let i = 0; i < count; i++) {
+    const card = document.createElement('article');
+    card.className = 'portfolio-item portfolio-item--skeleton';
+    card.setAttribute('aria-hidden', 'true');
+    card.innerHTML = `
+      <div class="portfolio-img"></div>
+      <div class="portfolio-content">
+        <h3></h3>
+        <p></p>
+      </div>
+    `;
+    grid.appendChild(card);
+  }
+}
 
-    // чипсы из первых 2-3 фич
-    const chips = el.querySelector('[data-chips]');
-    const feats = (s.features || []).slice(0, 3);
-    if (feats.length) {
-      chips.innerHTML = feats.map(f => `<span class="s-chip">${escapeHtml(f)}</span>`).join('');
+function renderCaseSkeletons(count = 3) {
+  const grid = document.getElementById('casesGrid');
+  if (!grid) return;
+  const skeleton = () => `
+    <article class="case-card case-card--skeleton" aria-hidden="true">
+      <header class="case-head">
+        <span class="case-tag skeleton-pill"></span>
+        <h3 class="skeleton-line skeleton-line--title"></h3>
+      </header>
+      <dl class="case-details">
+        <div><dt class="skeleton-line tiny"></dt><dd class="skeleton-line"></dd></div>
+        <div><dt class="skeleton-line tiny"></dt><dd class="skeleton-line"></dd></div>
+        <div><dt class="skeleton-line tiny"></dt><dd class="skeleton-line"></dd></div>
+      </dl>
+      <blockquote class="case-quote">
+        <p class="skeleton-line"></p>
+        <cite class="skeleton-line tiny"></cite>
+      </blockquote>
+    </article>`;
+  grid.innerHTML = new Array(count).fill('').map(skeleton).join('');
+}
+
+function renderTestimonialSkeletons(count = 3) {
+  const list = document.getElementById('testimonialsList');
+  if (!list) return;
+  list.innerHTML = '';
+  for (let i = 0; i < count; i++) {
+    const fig = document.createElement('figure');
+    fig.className = 'testimonial-card testimonial-card--skeleton';
+    fig.setAttribute('aria-hidden', 'true');
+    list.appendChild(fig);
+  }
+}
+
+function renderCertificateSkeletons(count = 3) {
+  const grid = document.getElementById('certsGallery');
+  if (!grid) return;
+  grid.innerHTML = '';
+  for (let i = 0; i < count; i++) {
+    const el = document.createElement('article');
+    el.className = 'certificate-card certificate-card--skeleton';
+    el.setAttribute('role', 'listitem');
+    el.setAttribute('aria-hidden', 'true');
+    grid.appendChild(el);
+  }
+}
+
+function renderPartnersSkeletons(count = 3) {
+  const list = document.getElementById('partnersList');
+  if (!list) return;
+  list.innerHTML = '';
+  for (let i = 0; i < count; i++) {
+    const li = document.createElement('li');
+    li.className = 'skeleton-line';
+    list.appendChild(li);
+  }
+}
+
+function renderStandardsSkeletons(count = 3) {
+  const list = document.getElementById('standardsList');
+  if (!list) return;
+  list.innerHTML = '';
+  for (let i = 0; i < count; i++) {
+    const li = document.createElement('li');
+    li.className = 'skeleton-line';
+    list.appendChild(li);
+  }
+}
+
+let casesData = [];
+let testimonialsData = [];
+let certificatesData = [];
+let partnersData = [];
+let standardsData = [];
+let casesLoadedOnce = false;
+let certsLoadedOnce = false;
+
+function formatMultiline(str = '') {
+  return escapeHtml(str).replace(/\n/g, '<br>');
+}
+
+function renderCasesList(data = []) {
+  const grid = document.getElementById('casesGrid');
+  if (!grid) return;
+  if (!data.length) {
+    grid.innerHTML = '<div class="data-state">Мы собираем лучшие проекты и скоро поделимся ими здесь.</div>';
+    return;
+  }
+
+  const items = data.map(caseItem => {
+    const tag = caseItem.tag ? `<span class="case-tag">${escapeHtml(caseItem.tag)}</span>` : '';
+    const quoteText = caseItem.quote_text ? `<p>${formatMultiline(caseItem.quote_text)}</p>` : '';
+    const authorParts = [caseItem.quote_author, caseItem.quote_company].map(part => escapeHtml(part || '')).filter(Boolean);
+    const cite = authorParts.length ? `<cite>${authorParts.join(', ')}</cite>` : '';
+    const quoteBlock = (quoteText || cite) ? `<blockquote class="case-quote">${quoteText}${cite}</blockquote>` : '';
+
+    return `
+      <article class="case-card">
+        <header class="case-head">
+          ${tag}
+          <h3>${escapeHtml(caseItem.title || '')}</h3>
+        </header>
+        <dl class="case-details">
+          ${(caseItem.problem ? `<div><dt>Проблема</dt><dd>${formatMultiline(caseItem.problem)}</dd></div>` : '')}
+          ${(caseItem.solution ? `<div><dt>Решение</dt><dd>${formatMultiline(caseItem.solution)}</dd></div>` : '')}
+          ${(caseItem.result_text ? `<div><dt>Результат</dt><dd>${formatMultiline(caseItem.result_text)}</dd></div>` : '')}
+        </dl>
+        ${quoteBlock}
+      </article>
+    `;
+  }).join('');
+
+  grid.innerHTML = items;
+}
+
+function renderTestimonialsList(data = []) {
+  const list = document.getElementById('testimonialsList');
+  if (!list) return;
+  if (!data.length) {
+    list.innerHTML = '<div class="data-state">Ожидаем свежие отзывы клиентов.</div>';
+    return;
+  }
+
+  list.innerHTML = data.map(item => {
+    const roleLine = [item.author, item.role_title].map(part => part ? escapeHtml(part) : '').filter(Boolean).join(', ');
+    const company = item.company ? `<span class="company">${escapeHtml(item.company)}</span>` : '';
+    const authorLine = roleLine ? `<span class="author">${roleLine}</span>` : '';
+    return `
+      <figure class="testimonial-card">
+        <blockquote>${formatMultiline(item.quote_text || '')}</blockquote>
+        <figcaption>
+          ${authorLine || ''}
+          ${company}
+        </figcaption>
+      </figure>
+    `;
+  }).join('');
+}
+
+function renderCertificatesList(data = []) {
+  const grid = document.getElementById('certsGallery');
+  if (!grid) return;
+  if (!data.length) {
+    grid.innerHTML = '<div class="data-state">Добавьте сертификаты в админ-панели, чтобы они появились на сайте.</div>';
+    return;
+  }
+
+  grid.innerHTML = data.map(item => `
+    <article class="certificate-card" role="listitem">
+      ${item.image_path ? `<img src="${escapeHtml(item.image_path)}" alt="${escapeHtml(item.alt_text || item.title || '')}" loading="lazy">` : ''}
+      <h3>${escapeHtml(item.title || '')}</h3>
+      <p>${escapeHtml(item.description || '')}</p>
+    </article>
+  `).join('');
+}
+
+function renderPartnersList(data = []) {
+  const list = document.getElementById('partnersList');
+  if (!list) return;
+  if (!data.length) {
+    list.innerHTML = '<li>Партнёры появятся после публикации в админ-панели.</li>';
+    return;
+  }
+  list.innerHTML = data.map(item => `<li>${escapeHtml(item.name || '')}${item.description ? ` — ${escapeHtml(item.description)}` : ''}</li>`).join('');
+}
+
+function renderStandardsList(data = []) {
+  const list = document.getElementById('standardsList');
+  if (!list) return;
+  if (!data.length) {
+    list.innerHTML = '<li>Добавьте стандарты, чтобы показать область сертификации.</li>';
+    return;
+  }
+  list.innerHTML = data.map(item => `<li>${escapeHtml(item.title || '')}${item.description ? ` — ${escapeHtml(item.description)}` : ''}</li>`).join('');
+}
+
+async function loadCasesSection(force = false) {
+  if (!force && casesLoadedOnce) return;
+  renderCaseSkeletons();
+  renderTestimonialSkeletons();
+
+  try {
+    const [casesRes, testimonialsRes] = await Promise.all([
+      fetch('api/cases.php'),
+      fetch('api/testimonials.php')
+    ]);
+    if (!casesRes.ok || !testimonialsRes.ok) throw new Error('failed');
+    casesData = await casesRes.json();
+    testimonialsData = await testimonialsRes.json();
+    renderCasesList(Array.isArray(casesData) ? casesData : []);
+    renderTestimonialsList(Array.isArray(testimonialsData) ? testimonialsData : []);
+    casesLoadedOnce = true;
+  } catch (error) {
+    console.error('cases section failed', error);
+    const grid = document.getElementById('casesGrid');
+    const list = document.getElementById('testimonialsList');
+    if (grid) grid.innerHTML = '<div class="data-state error">Не удалось загрузить кейсы. Попробуйте обновить страницу позже.</div>';
+    if (list) list.innerHTML = '<div class="data-state error">Не удалось загрузить отзывы.</div>';
+  }
+}
+
+async function loadCertificatesSection(force = false) {
+  if (!force && certsLoadedOnce) return;
+  renderCertificateSkeletons();
+  renderPartnersSkeletons();
+  renderStandardsSkeletons();
+
+  try {
+    const [certRes, partnersRes, standardsRes] = await Promise.all([
+      fetch('api/certificates.php'),
+      fetch('api/partners.php'),
+      fetch('api/standards.php')
+    ]);
+    if (!certRes.ok || !partnersRes.ok || !standardsRes.ok) throw new Error('failed');
+    certificatesData = await certRes.json();
+    partnersData = await partnersRes.json();
+    standardsData = await standardsRes.json();
+    renderCertificatesList(Array.isArray(certificatesData) ? certificatesData : []);
+    renderPartnersList(Array.isArray(partnersData) ? partnersData : []);
+    renderStandardsList(Array.isArray(standardsData) ? standardsData : []);
+    certsLoadedOnce = true;
+  } catch (error) {
+    console.error('certificates section failed', error);
+    const grid = document.getElementById('certsGallery');
+    const partnersList = document.getElementById('partnersList');
+    const standardsList = document.getElementById('standardsList');
+    if (grid) grid.innerHTML = '<div class="data-state error">Сертификаты временно недоступны.</div>';
+    if (partnersList) partnersList.innerHTML = '<li class="data-state error">Не удалось загрузить партнёров.</li>';
+    if (standardsList) standardsList.innerHTML = '<li class="data-state error">Не удалось загрузить стандарты.</li>';
+  }
+}
+
+async function loadServices() {
+  const container = document.getElementById('services-container');
+  if (!container) return;
+  renderServiceSkeletons();
+
+  try {
+    const res = await fetch('api/services.php');
+    if (!res.ok) throw new Error(`services list failed: ${res.status}`);
+    const list = await res.json();
+    services = Array.isArray(list) ? list : [];
+
+    container.innerHTML = '';
+
+    // ПУЛ конкарренси, чтобы не убить сервер доп.запросами
+    const MAX_PARALLEL = 4;
+    let inFlight = 0, queue = [];
+
+    function withLimit(fn) {
+      return new Promise((resolve) => {
+        const run = async () => {
+          inFlight++;
+          try { resolve(await fn()); }
+          finally {
+            inFlight--;
+            if (queue.length) queue.shift()();
+          }
+        };
+        (inFlight < MAX_PARALLEL) ? run() : queue.push(run);
+      });
     }
 
-    // клики/клавиатура
-    el.addEventListener('click', () => openService(+s.id));
-    el.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openService(+s.id); }
-    });
-
-    container.appendChild(el);
-
-    // Если API уже отдаёт cover, ставим сразу:
-    if (s.cover) {
-      el.style.setProperty('--bg', `url("${s.cover}")`);
+    if (!services.length) {
+      container.innerHTML = '<div class="data-state">Список услуг скоро пополнится. Мы уже работаем над обновлением.</div>';
       return;
     }
 
-    // Иначе — подтянем превьюшку услуги (первая картинка) аккуратно:
-    withLimit(async () => {
-      try {
-        const rr = await fetch(`api/services.php?id=${s.id}`);
-        if (!rr.ok) return;
-        const full = await rr.json();
-        const firstImg = (full.images && full.images[0]?.path) || null;
-        if (firstImg) el.style.setProperty('--bg', `url("${firstImg}")`);
-      } catch(_) {}
-    });
-  });
+    services.forEach((s) => {
+      const el = document.createElement('article');
+      el.className = 'service-card';
+      el.setAttribute('role', 'button');
+      el.setAttribute('tabindex', '0');
+      el.dataset.id = s.id;
 
-  // делегирование кликов уже есть в твоём коде — можно убрать onCardClick
+      // базовая верстка
+      el.innerHTML = `
+        <div class="shine"></div>
+        <div class="glass">
+          <h3>${escapeHtml(s.name)}</h3>
+          <p>${escapeHtml(trimDescription(s.description))}</p>
+          <div class="s-chips" data-chips></div>
+        </div>
+      `;
+
+      // пока нет обложки — приятный градиент-заглушка (чтобы не прыгало)
+      const fallback = `linear-gradient(135deg, rgba(255,173,0,.18), rgba(95,169,255,.18)), linear-gradient(135deg, #2a2a2a, #1e1e1e)`;
+      el.style.setProperty('--bg', fallback);
+
+      // чипсы из первых 2-3 фич
+      const chips = el.querySelector('[data-chips]');
+      const feats = (s.features || []).slice(0, 3);
+      if (feats.length) {
+        chips.innerHTML = feats.map(f => `<span class="s-chip">${escapeHtml(f)}</span>`).join('');
+      }
+
+      // клики/клавиатура
+      el.addEventListener('click', () => openService(+s.id));
+      el.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openService(+s.id); }
+      });
+
+      container.appendChild(el);
+
+      // Если API уже отдаёт cover, ставим сразу:
+      if (s.cover) {
+        el.style.setProperty('--bg', `url("${s.cover}")`);
+        return;
+      }
+
+      // Иначе — подтянем превьюшку услуги (первая картинка) аккуратно:
+      withLimit(async () => {
+        try {
+          const rr = await fetch(`api/services.php?id=${s.id}`);
+          if (!rr.ok) return;
+          const full = await rr.json();
+          const firstImg = (full.images && full.images[0]?.path) || null;
+          if (firstImg) el.style.setProperty('--bg', `url("${firstImg}")`);
+        } catch(_) {}
+      });
+    });
+  } catch (error) {
+    console.error('services list failed', error);
+    services = [];
+    container.innerHTML = '<div class="data-state error">Не удалось загрузить услуги. Попробуйте обновить страницу позже.</div>';
+  }
 }
 function trimDescription(text, minLen = 100) {
   if (!text) return '';
@@ -139,14 +427,20 @@ function trimDescription(text, minLen = 100) {
 }
 function toggleNav() {
   const nav = document.getElementById('nav');
+  if (!nav) return;
   nav.classList.toggle('open');
-  document.body.classList.toggle('nav-open', nav.classList.contains('open'));
+  const isOpen = nav.classList.contains('open');
+  document.body.classList.toggle('nav-open', isOpen);
+  const toggle = document.getElementById('navToggle');
+  if (toggle) toggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
 }
 function closeNav() {
   const nav = document.getElementById('nav');
   if (!nav) return;
   nav.classList.remove('open');
   document.body.classList.remove('nav-open');
+  const toggle = document.getElementById('navToggle');
+  if (toggle) toggle.setAttribute('aria-expanded', 'false');
 }
 function onCardClick(e){
   const card = e.target.closest('.card-link');
@@ -354,6 +648,11 @@ function adminRenderDashboard() {
       <nav class="aside-nav">
         <button class="aside-link active" data-tab="services">Услуги</button>
         <button class="aside-link" data-tab="portfolio">Портфолио</button>
+        <button class="aside-link" data-tab="cases">Кейсы</button>
+        <button class="aside-link" data-tab="testimonials">Отзывы</button>
+        <button class="aside-link" data-tab="certificates">Сертификаты</button>
+        <button class="aside-link" data-tab="partners">Партнёры</button>
+        <button class="aside-link" data-tab="standards">Стандарты</button>
         <button class="aside-link" data-tab="settings">Настройки</button>
       </nav>
       <button class="btn ghost wide" id="aLogout">Выйти</button>
@@ -421,20 +720,165 @@ function adminRenderDashboard() {
           </div>
         </div>
 
-        <div class="admin-card admin-add collapse" id="addWorkCard" hidden>
-          <h3 style="margin-top:0">Новая работа</h3>
+      <div class="admin-card admin-add collapse" id="addWorkCard" hidden>
+        <h3 style="margin-top:0">Новая работа</h3>
+        <div style="display:grid; gap:.75rem;">
+          <input id="pTitle" class="form-control" placeholder="Заголовок">
+          <textarea id="pDesc" class="form-control" rows="3" placeholder="Короткое описание"></textarea>
+          <input id="pImg" class="form-control" type="file" accept="image/*">
+          <div class="admin-actions">
+            <button class="btn accent" id="pAdd">Сохранить</button>
+            <button class="btn ghost" id="cancelAddWork">Отмена</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="pList" class="list-cards" style="margin-top:1rem;"></div>
+    </div>
+
+      <!-- CASES TAB -->
+      <div class="tab-panel" id="tab-cases">
+        <div class="toolbar">
+          <div class="toolbar-left">
+            <input id="filterCases" class="form-control" placeholder="Поиск по кейсам…">
+          </div>
+          <div class="toolbar-right">
+            <span class="badge" id="casesCount">—</span>
+            <button class="btn accent" id="openAddCase">Добавить кейс</button>
+          </div>
+        </div>
+
+        <div class="admin-card admin-add collapse" id="addCaseCard" hidden>
+          <h3 style="margin-top:0">Новый кейс</h3>
           <div style="display:grid; gap:.75rem;">
-            <input id="pTitle" class="form-control" placeholder="Заголовок">
-            <textarea id="pDesc" class="form-control" rows="3" placeholder="Короткое описание"></textarea>
-            <input id="pImg" class="form-control" type="file" accept="image/*">
+            <input id="caseTag" class="form-control" placeholder="Отрасль / тег">
+            <input id="caseTitle" class="form-control" placeholder="Заголовок кейса">
+            <textarea id="caseProblem" class="form-control" rows="3" placeholder="Проблема"></textarea>
+            <textarea id="caseSolution" class="form-control" rows="3" placeholder="Решение"></textarea>
+            <textarea id="caseResult" class="form-control" rows="3" placeholder="Результат"></textarea>
+            <textarea id="caseQuote" class="form-control" rows="3" placeholder="Цитата клиента"></textarea>
+            <div style="display:grid; gap:.75rem; grid-template-columns:repeat(auto-fit,minmax(200px,1fr));">
+              <input id="caseAuthor" class="form-control" placeholder="Имя / должность">
+              <input id="caseCompany" class="form-control" placeholder="Компания">
+            </div>
             <div class="admin-actions">
-              <button class="btn accent" id="pAdd">Сохранить</button>
-              <button class="btn ghost" id="cancelAddWork">Отмена</button>
+              <button class="btn accent" id="caseAdd">Сохранить</button>
+              <button class="btn ghost" id="cancelAddCase">Отмена</button>
             </div>
           </div>
         </div>
 
-        <div id="pList" class="list-cards" style="margin-top:1rem;"></div>
+        <div id="casesList" class="list-cards" style="margin-top:1rem;"></div>
+      </div>
+
+      <!-- TESTIMONIALS TAB -->
+      <div class="tab-panel" id="tab-testimonials">
+        <div class="toolbar">
+          <div class="toolbar-left">
+            <input id="filterTestimonials" class="form-control" placeholder="Фильтр по отзывам…">
+          </div>
+          <div class="toolbar-right">
+            <span class="badge" id="testimonialsCount">—</span>
+            <button class="btn accent" id="openAddTestimonial">Добавить отзыв</button>
+          </div>
+        </div>
+
+        <div class="admin-card admin-add collapse" id="addTestimonialCard" hidden>
+          <h3 style="margin-top:0">Новый отзыв</h3>
+          <div style="display:grid; gap:.75rem;">
+            <textarea id="testimonialQuote" class="form-control" rows="4" placeholder="Текст отзыва"></textarea>
+            <input id="testimonialAuthor" class="form-control" placeholder="Имя спикера">
+            <input id="testimonialRole" class="form-control" placeholder="Должность">
+            <input id="testimonialCompany" class="form-control" placeholder="Компания">
+            <div class="admin-actions">
+              <button class="btn accent" id="testimonialAdd">Сохранить</button>
+              <button class="btn ghost" id="cancelAddTestimonial">Отмена</button>
+            </div>
+          </div>
+        </div>
+
+        <div id="testimonialsListAdmin" class="list-cards" style="margin-top:1rem;"></div>
+      </div>
+
+      <!-- CERTIFICATES TAB -->
+      <div class="tab-panel" id="tab-certificates">
+        <div class="toolbar">
+          <div class="toolbar-left"><span class="muted">Поддерживаются JPG, PNG, SVG, WebP до 10 МБ</span></div>
+          <div class="toolbar-right">
+            <span class="badge" id="certificatesCount">—</span>
+            <button class="btn accent" id="openAddCertificate">Добавить сертификат</button>
+          </div>
+        </div>
+
+        <div class="admin-card admin-add collapse" id="addCertificateCard" hidden>
+          <h3 style="margin-top:0">Новый сертификат</h3>
+          <div style="display:grid; gap:.75rem;">
+            <input id="certificateTitle" class="form-control" placeholder="Название">
+            <textarea id="certificateDescription" class="form-control" rows="3" placeholder="Описание"></textarea>
+            <input id="certificateAlt" class="form-control" placeholder="Альтернативный текст">
+            <input id="certificateFile" class="form-control" type="file" accept="image/*">
+            <div class="admin-actions">
+              <button class="btn accent" id="certificateAdd">Сохранить</button>
+              <button class="btn ghost" id="cancelAddCertificate">Отмена</button>
+            </div>
+          </div>
+        </div>
+
+        <div id="certificatesList" class="list-cards" style="margin-top:1rem;"></div>
+      </div>
+
+      <!-- PARTNERS TAB -->
+      <div class="tab-panel" id="tab-partners">
+        <div class="toolbar">
+          <div class="toolbar-left">
+            <input id="filterPartners" class="form-control" placeholder="Поиск по партнёрам…">
+          </div>
+          <div class="toolbar-right">
+            <span class="badge" id="partnersCount">—</span>
+            <button class="btn accent" id="openAddPartner">Добавить партнёра</button>
+          </div>
+        </div>
+
+        <div class="admin-card admin-add collapse" id="addPartnerCard" hidden>
+          <h3 style="margin-top:0">Новый партнёр</h3>
+          <div style="display:grid; gap:.75rem;">
+            <input id="partnerName" class="form-control" placeholder="Название партнёра">
+            <textarea id="partnerDescription" class="form-control" rows="3" placeholder="Описание / специализация"></textarea>
+            <div class="admin-actions">
+              <button class="btn accent" id="partnerAdd">Сохранить</button>
+              <button class="btn ghost" id="cancelAddPartner">Отмена</button>
+            </div>
+          </div>
+        </div>
+
+        <div id="partnersListAdmin" class="list-cards" style="margin-top:1rem;"></div>
+      </div>
+
+      <!-- STANDARDS TAB -->
+      <div class="tab-panel" id="tab-standards">
+        <div class="toolbar">
+          <div class="toolbar-left">
+            <input id="filterStandards" class="form-control" placeholder="Поиск по стандартам…">
+          </div>
+          <div class="toolbar-right">
+            <span class="badge" id="standardsCount">—</span>
+            <button class="btn accent" id="openAddStandard">Добавить стандарт</button>
+          </div>
+        </div>
+
+        <div class="admin-card admin-add collapse" id="addStandardCard" hidden>
+          <h3 style="margin-top:0">Новый стандарт</h3>
+          <div style="display:grid; gap:.75rem;">
+            <input id="standardTitle" class="form-control" placeholder="Название стандарта">
+            <textarea id="standardDescription" class="form-control" rows="3" placeholder="Описание / область применения"></textarea>
+            <div class="admin-actions">
+              <button class="btn accent" id="standardAdd">Сохранить</button>
+              <button class="btn ghost" id="cancelAddStandard">Отмена</button>
+            </div>
+          </div>
+        </div>
+
+        <div id="standardsListAdmin" class="list-cards" style="margin-top:1rem;"></div>
       </div>
 
       <!-- SETTINGS TAB -->
@@ -467,6 +911,11 @@ function adminRenderDashboard() {
       // лениво подгружаем
       if (tab === 'services') adminLoadList();
       if (tab === 'portfolio') adminLoadPortfolioList();
+      if (tab === 'cases') adminLoadCasesList();
+      if (tab === 'testimonials') adminLoadTestimonialsList();
+      if (tab === 'certificates') adminLoadCertificatesList();
+      if (tab === 'partners') adminLoadPartnersList();
+      if (tab === 'standards') adminLoadStandardsList();
     };
   });
 
@@ -493,6 +942,11 @@ function adminRenderDashboard() {
 
   const addServiceCard = document.getElementById('addServiceCard');
   const addWorkCard    = document.getElementById('addWorkCard');
+  const addCaseCard    = document.getElementById('addCaseCard');
+  const addTestimonialCard = document.getElementById('addTestimonialCard');
+  const addCertificateCard = document.getElementById('addCertificateCard');
+  const addPartnerCard = document.getElementById('addPartnerCard');
+  const addStandardCard = document.getElementById('addStandardCard');
 
   const openAddServiceBtn = document.getElementById('openAddService');
   openAddServiceBtn.classList.add('btn-toggle');
@@ -514,6 +968,66 @@ function adminRenderDashboard() {
     openAddWorkBtn.classList.remove('ghost'); openAddWorkBtn.classList.add('accent');
     openAddWorkBtn.textContent = 'Добавить работу';
     openAddWorkBtn.setAttribute('aria-expanded','false');
+  };
+
+  const openAddCaseBtn = document.getElementById('openAddCase');
+  openAddCaseBtn.classList.add('btn-toggle');
+  openAddCaseBtn.onclick = ()=> toggleCollapsible('addCaseCard', openAddCaseBtn, 'Добавить кейс','Скрыть форму');
+
+  document.getElementById('cancelAddCase').onclick = ()=>{
+    addCaseCard.classList.remove('open');
+    addCaseCard.addEventListener('transitionend', () => { addCaseCard.hidden = true; }, { once:true });
+    openAddCaseBtn.classList.remove('ghost'); openAddCaseBtn.classList.add('accent');
+    openAddCaseBtn.textContent = 'Добавить кейс';
+    openAddCaseBtn.setAttribute('aria-expanded','false');
+  };
+
+  const openAddTestimonialBtn = document.getElementById('openAddTestimonial');
+  openAddTestimonialBtn.classList.add('btn-toggle');
+  openAddTestimonialBtn.onclick = ()=> toggleCollapsible('addTestimonialCard', openAddTestimonialBtn, 'Добавить отзыв','Скрыть форму');
+
+  document.getElementById('cancelAddTestimonial').onclick = ()=>{
+    addTestimonialCard.classList.remove('open');
+    addTestimonialCard.addEventListener('transitionend', () => { addTestimonialCard.hidden = true; }, { once:true });
+    openAddTestimonialBtn.classList.remove('ghost'); openAddTestimonialBtn.classList.add('accent');
+    openAddTestimonialBtn.textContent = 'Добавить отзыв';
+    openAddTestimonialBtn.setAttribute('aria-expanded','false');
+  };
+
+  const openAddCertificateBtn = document.getElementById('openAddCertificate');
+  openAddCertificateBtn.classList.add('btn-toggle');
+  openAddCertificateBtn.onclick = ()=> toggleCollapsible('addCertificateCard', openAddCertificateBtn, 'Добавить сертификат','Скрыть форму');
+
+  document.getElementById('cancelAddCertificate').onclick = ()=>{
+    addCertificateCard.classList.remove('open');
+    addCertificateCard.addEventListener('transitionend', () => { addCertificateCard.hidden = true; }, { once:true });
+    openAddCertificateBtn.classList.remove('ghost'); openAddCertificateBtn.classList.add('accent');
+    openAddCertificateBtn.textContent = 'Добавить сертификат';
+    openAddCertificateBtn.setAttribute('aria-expanded','false');
+  };
+
+  const openAddPartnerBtn = document.getElementById('openAddPartner');
+  openAddPartnerBtn.classList.add('btn-toggle');
+  openAddPartnerBtn.onclick = ()=> toggleCollapsible('addPartnerCard', openAddPartnerBtn, 'Добавить партнёра','Скрыть форму');
+
+  document.getElementById('cancelAddPartner').onclick = ()=>{
+    addPartnerCard.classList.remove('open');
+    addPartnerCard.addEventListener('transitionend', () => { addPartnerCard.hidden = true; }, { once:true });
+    openAddPartnerBtn.classList.remove('ghost'); openAddPartnerBtn.classList.add('accent');
+    openAddPartnerBtn.textContent = 'Добавить партнёра';
+    openAddPartnerBtn.setAttribute('aria-expanded','false');
+  };
+
+  const openAddStandardBtn = document.getElementById('openAddStandard');
+  openAddStandardBtn.classList.add('btn-toggle');
+  openAddStandardBtn.onclick = ()=> toggleCollapsible('addStandardCard', openAddStandardBtn, 'Добавить стандарт','Скрыть форму');
+
+  document.getElementById('cancelAddStandard').onclick = ()=>{
+    addStandardCard.classList.remove('open');
+    addStandardCard.addEventListener('transitionend', () => { addStandardCard.hidden = true; }, { once:true });
+    openAddStandardBtn.classList.remove('ghost'); openAddStandardBtn.classList.add('accent');
+    openAddStandardBtn.textContent = 'Добавить стандарт';
+    openAddStandardBtn.setAttribute('aria-expanded','false');
   };
 
 
@@ -585,6 +1099,141 @@ function adminRenderDashboard() {
     if (document.querySelector('#about.page-section.active')) loadPortfolio();
     toast('Работа добавлена!');
   };
+
+  document.getElementById('caseAdd').onclick = async () => {
+    const payload = {
+      tag: document.getElementById('caseTag').value.trim(),
+      title: document.getElementById('caseTitle').value.trim(),
+      problem: document.getElementById('caseProblem').value.trim(),
+      solution: document.getElementById('caseSolution').value.trim(),
+      result: document.getElementById('caseResult').value.trim(),
+      quote_text: document.getElementById('caseQuote').value.trim(),
+      quote_author: document.getElementById('caseAuthor').value.trim(),
+      quote_company: document.getElementById('caseCompany').value.trim()
+    };
+    if (!payload.title) { toast('Добавьте заголовок кейса','warn'); return; }
+    const r = await fetch('api/cases.php', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(payload)
+    });
+    if (!r.ok) { toast('Не удалось добавить кейс','error'); return; }
+
+    ['caseTag','caseTitle','caseProblem','caseSolution','caseResult','caseQuote','caseAuthor','caseCompany'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.value = '';
+    });
+    toggleCollapsible('addCaseCard', openAddCaseBtn, 'Добавить кейс','Скрыть форму');
+
+    await adminLoadCasesList();
+    await loadCasesSection(true);
+    toast('Кейс добавлен!');
+  };
+
+  document.getElementById('testimonialAdd').onclick = async () => {
+    const payload = {
+      quote_text: document.getElementById('testimonialQuote').value.trim(),
+      author: document.getElementById('testimonialAuthor').value.trim(),
+      role_title: document.getElementById('testimonialRole').value.trim(),
+      company: document.getElementById('testimonialCompany').value.trim()
+    };
+    if (!payload.quote_text) { toast('Добавьте текст отзыва','warn'); return; }
+    const r = await fetch('api/testimonials.php', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(payload)
+    });
+    if (!r.ok) { toast('Не удалось добавить отзыв','error'); return; }
+
+    ['testimonialQuote','testimonialAuthor','testimonialRole','testimonialCompany'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.value = '';
+    });
+    toggleCollapsible('addTestimonialCard', openAddTestimonialBtn, 'Добавить отзыв','Скрыть форму');
+
+    await adminLoadTestimonialsList();
+    await loadCasesSection(true);
+    toast('Отзыв добавлен!');
+  };
+
+  document.getElementById('certificateAdd').onclick = async () => {
+    const payload = {
+      title: document.getElementById('certificateTitle').value.trim(),
+      description: document.getElementById('certificateDescription').value.trim(),
+      alt_text: document.getElementById('certificateAlt').value.trim()
+    };
+    if (!payload.title) { toast('Укажите название сертификата','warn'); return; }
+    const file = document.getElementById('certificateFile').files[0];
+    const r = await fetch('api/certificates.php', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(payload)
+    });
+    if (!r.ok) { toast('Не удалось добавить сертификат','error'); return; }
+    const { id } = await r.json();
+    if (id && file) {
+      const fd = new FormData();
+      fd.append('certificate_id', id);
+      fd.append('image', file);
+      await fetch('api/upload_certificate_image.php', { method:'POST', body: fd });
+    }
+
+    ['certificateTitle','certificateDescription','certificateAlt'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.value = '';
+    });
+    document.getElementById('certificateFile').value = '';
+    toggleCollapsible('addCertificateCard', openAddCertificateBtn, 'Добавить сертификат','Скрыть форму');
+
+    await adminLoadCertificatesList();
+    await loadCertificatesSection(true);
+    toast('Сертификат добавлен!');
+  };
+
+  document.getElementById('partnerAdd').onclick = async () => {
+    const payload = {
+      name: document.getElementById('partnerName').value.trim(),
+      description: document.getElementById('partnerDescription').value.trim()
+    };
+    if (!payload.name) { toast('Укажите название партнёра','warn'); return; }
+    const r = await fetch('api/partners.php', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(payload)
+    });
+    if (!r.ok) { toast('Не удалось добавить партнёра','error'); return; }
+
+    document.getElementById('partnerName').value = '';
+    document.getElementById('partnerDescription').value = '';
+    toggleCollapsible('addPartnerCard', openAddPartnerBtn, 'Добавить партнёра','Скрыть форму');
+
+    await adminLoadPartnersList();
+    await loadCertificatesSection(true);
+    toast('Партнёр добавлен!');
+  };
+
+  document.getElementById('standardAdd').onclick = async () => {
+    const payload = {
+      title: document.getElementById('standardTitle').value.trim(),
+      description: document.getElementById('standardDescription').value.trim()
+    };
+    if (!payload.title) { toast('Название стандарта обязательно','warn'); return; }
+    const r = await fetch('api/standards.php', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(payload)
+    });
+    if (!r.ok) { toast('Не удалось добавить стандарт','error'); return; }
+
+    document.getElementById('standardTitle').value = '';
+    document.getElementById('standardDescription').value = '';
+    toggleCollapsible('addStandardCard', openAddStandardBtn, 'Добавить стандарт','Скрыть форму');
+
+    await adminLoadStandardsList();
+    await loadCertificatesSection(true);
+    toast('Стандарт добавлен!');
+  };
+
   // Фильтры (по месту, без бэка)
   document.getElementById('filterServices').addEventListener('input', (e)=>{
     const q = e.target.value.trim().toLowerCase();
@@ -596,6 +1245,35 @@ function adminRenderDashboard() {
   document.getElementById('filterPortfolio').addEventListener('input', (e)=>{
     const q = e.target.value.trim().toLowerCase();
     document.querySelectorAll('#pList .list-card').forEach(card=>{
+      const t = card.innerText.toLowerCase();
+      card.style.display = t.includes(q) ? '' : 'none';
+    });
+  });
+
+  document.getElementById('filterCases').addEventListener('input', (e)=>{
+    const q = e.target.value.trim().toLowerCase();
+    document.querySelectorAll('#casesList .list-card').forEach(card=>{
+      const t = card.innerText.toLowerCase();
+      card.style.display = t.includes(q) ? '' : 'none';
+    });
+  });
+  document.getElementById('filterTestimonials').addEventListener('input', (e)=>{
+    const q = e.target.value.trim().toLowerCase();
+    document.querySelectorAll('#testimonialsListAdmin .list-card').forEach(card=>{
+      const t = card.innerText.toLowerCase();
+      card.style.display = t.includes(q) ? '' : 'none';
+    });
+  });
+  document.getElementById('filterPartners').addEventListener('input', (e)=>{
+    const q = e.target.value.trim().toLowerCase();
+    document.querySelectorAll('#partnersListAdmin .list-card').forEach(card=>{
+      const t = card.innerText.toLowerCase();
+      card.style.display = t.includes(q) ? '' : 'none';
+    });
+  });
+  document.getElementById('filterStandards').addEventListener('input', (e)=>{
+    const q = e.target.value.trim().toLowerCase();
+    document.querySelectorAll('#standardsListAdmin .list-card').forEach(card=>{
       const t = card.innerText.toLowerCase();
       card.style.display = t.includes(q) ? '' : 'none';
     });
@@ -863,6 +1541,252 @@ async function adminLoadPortfolioList() {
     list.innerHTML = '<div class="muted">Не удалось загрузить список</div>';
   }
 }
+
+async function adminLoadCasesList() {
+  const list = document.getElementById('casesList');
+  if (!list) return;
+  list.innerHTML = '<div class="muted">Загрузка...</div>';
+  try {
+    const r = await fetch('api/cases.php');
+    const items = await r.json();
+    document.getElementById('casesCount').textContent = items.length;
+    if (!items.length) {
+      list.innerHTML = '<div class="muted">Кейсы ещё не добавлены.</div>';
+      return;
+    }
+    list.innerHTML = items.map(item => {
+      const summary = trimDescription(`${item.problem || ''} ${item.solution || ''}`, 160);
+      const tag = item.tag ? `<span class="muted">${escapeHtml(item.tag)}</span>` : '';
+      return `
+        <div class="list-card">
+          <div class="top">
+            <div>
+              <h4>#${item.id} ${escapeHtml(item.title || '')}</h4>
+              ${tag}
+            </div>
+            <div style="display:flex; gap:.5rem;">
+              <button class="btn btn-small" data-edit-case="${item.id}">Редактировать</button>
+              <button class="btn danger btn-small" data-del-case="${item.id}">Удалить</button>
+            </div>
+          </div>
+          <div class="muted">${escapeHtml(summary)}</div>
+        </div>
+      `;
+    }).join('');
+
+    list.querySelectorAll('[data-edit-case]').forEach(btn => {
+      btn.onclick = () => openCaseEditor(+btn.dataset.editCase);
+    });
+    list.querySelectorAll('[data-del-case]').forEach(btn => {
+      btn.onclick = async () => {
+        if (!confirm('Удалить кейс?')) return;
+        const resp = await fetch('api/cases.php?id=' + btn.dataset.delCase, { method:'DELETE' });
+        if (resp.ok) {
+          await adminLoadCasesList();
+          await loadCasesSection(true);
+        } else {
+          toast('Не удалось удалить кейс','error');
+        }
+      };
+    });
+  } catch (e) {
+    list.innerHTML = '<div class="muted">Не удалось загрузить кейсы</div>';
+  }
+}
+
+async function adminLoadTestimonialsList() {
+  const list = document.getElementById('testimonialsListAdmin');
+  if (!list) return;
+  list.innerHTML = '<div class="muted">Загрузка...</div>';
+  try {
+    const r = await fetch('api/testimonials.php');
+    const items = await r.json();
+    document.getElementById('testimonialsCount').textContent = items.length;
+    if (!items.length) {
+      list.innerHTML = '<div class="muted">Отзывы пока не опубликованы.</div>';
+      return;
+    }
+    list.innerHTML = items.map(item => {
+      const person = [item.author, item.role_title].filter(Boolean).map(escapeHtml).join(', ');
+      const header = person || 'Без указания автора';
+      return `
+        <div class="list-card">
+          <div class="top">
+            <div>
+              <h4>#${item.id} ${header}</h4>
+              ${item.company ? `<div class="muted">${escapeHtml(item.company)}</div>` : ''}
+            </div>
+            <div style="display:flex; gap:.5rem;">
+              <button class="btn btn-small" data-edit-testimonial="${item.id}">Редактировать</button>
+              <button class="btn danger btn-small" data-del-testimonial="${item.id}">Удалить</button>
+            </div>
+          </div>
+          <div class="muted">${escapeHtml(trimDescription(item.quote_text || '', 160))}</div>
+        </div>
+      `;
+    }).join('');
+
+    list.querySelectorAll('[data-edit-testimonial]').forEach(btn => {
+      btn.onclick = () => openTestimonialEditor(+btn.dataset.editTestimonial);
+    });
+    list.querySelectorAll('[data-del-testimonial]').forEach(btn => {
+      btn.onclick = async () => {
+        if (!confirm('Удалить отзыв?')) return;
+        const resp = await fetch('api/testimonials.php?id=' + btn.dataset.delTestimonial, { method:'DELETE' });
+        if (resp.ok) {
+          await adminLoadTestimonialsList();
+          await loadCasesSection(true);
+        } else {
+          toast('Не удалось удалить отзыв','error');
+        }
+      };
+    });
+  } catch (e) {
+    list.innerHTML = '<div class="muted">Не удалось загрузить отзывы</div>';
+  }
+}
+
+async function adminLoadCertificatesList() {
+  const list = document.getElementById('certificatesList');
+  if (!list) return;
+  list.innerHTML = '<div class="muted">Загрузка...</div>';
+  try {
+    const r = await fetch('api/certificates.php');
+    const items = await r.json();
+    document.getElementById('certificatesCount').textContent = items.length;
+    if (!items.length) {
+      list.innerHTML = '<div class="muted">Добавьте первый сертификат.</div>';
+      return;
+    }
+    list.innerHTML = items.map(item => `
+      <div class="list-card">
+        <div class="top">
+          <div style="display:flex; align-items:center; gap:.6rem;">
+            ${item.image_path ? `<img class="thumb" src="${escapeHtml(item.image_path)}" alt="${escapeHtml(item.alt_text || '')}">` : `<div class="thumb thumb--ph" aria-hidden="true"></div>`}
+            <h4>#${item.id} ${escapeHtml(item.title || '')}</h4>
+          </div>
+          <div style="display:flex; gap:.5rem;">
+            <button class="btn btn-small" data-edit-certificate="${item.id}">Редактировать</button>
+            <button class="btn danger btn-small" data-del-certificate="${item.id}">Удалить</button>
+          </div>
+        </div>
+        <div class="muted">${escapeHtml(item.description || '')}</div>
+      </div>
+    `).join('');
+
+    list.querySelectorAll('[data-edit-certificate]').forEach(btn => {
+      btn.onclick = () => openCertificateEditor(+btn.dataset.editCertificate);
+    });
+    list.querySelectorAll('[data-del-certificate]').forEach(btn => {
+      btn.onclick = async () => {
+        if (!confirm('Удалить сертификат?')) return;
+        const resp = await fetch('api/certificates.php?id=' + btn.dataset.delCertificate, { method:'DELETE' });
+        if (resp.ok) {
+          await adminLoadCertificatesList();
+          await loadCertificatesSection(true);
+        } else {
+          toast('Не удалось удалить сертификат','error');
+        }
+      };
+    });
+  } catch (e) {
+    list.innerHTML = '<div class="muted">Не удалось загрузить сертификаты</div>';
+  }
+}
+
+async function adminLoadPartnersList() {
+  const list = document.getElementById('partnersListAdmin');
+  if (!list) return;
+  list.innerHTML = '<div class="muted">Загрузка...</div>';
+  try {
+    const r = await fetch('api/partners.php');
+    const items = await r.json();
+    document.getElementById('partnersCount').textContent = items.length;
+    if (!items.length) {
+      list.innerHTML = '<div class="muted">Партнёры пока не указаны.</div>';
+      return;
+    }
+    list.innerHTML = items.map(item => `
+      <div class="list-card">
+        <div class="top">
+          <div>
+            <h4>#${item.id} ${escapeHtml(item.name || '')}</h4>
+          </div>
+          <div style="display:flex; gap:.5rem;">
+            <button class="btn btn-small" data-edit-partner="${item.id}">Редактировать</button>
+            <button class="btn danger btn-small" data-del-partner="${item.id}">Удалить</button>
+          </div>
+        </div>
+        <div class="muted">${escapeHtml(item.description || '')}</div>
+      </div>
+    `).join('');
+
+    list.querySelectorAll('[data-edit-partner]').forEach(btn => {
+      btn.onclick = () => openPartnerEditor(+btn.dataset.editPartner);
+    });
+    list.querySelectorAll('[data-del-partner]').forEach(btn => {
+      btn.onclick = async () => {
+        if (!confirm('Удалить партнёра?')) return;
+        const resp = await fetch('api/partners.php?id=' + btn.dataset.delPartner, { method:'DELETE' });
+        if (resp.ok) {
+          await adminLoadPartnersList();
+          await loadCertificatesSection(true);
+        } else {
+          toast('Не удалось удалить партнёра','error');
+        }
+      };
+    });
+  } catch (e) {
+    list.innerHTML = '<div class="muted">Не удалось загрузить партнёров</div>';
+  }
+}
+
+async function adminLoadStandardsList() {
+  const list = document.getElementById('standardsListAdmin');
+  if (!list) return;
+  list.innerHTML = '<div class="muted">Загрузка...</div>';
+  try {
+    const r = await fetch('api/standards.php');
+    const items = await r.json();
+    document.getElementById('standardsCount').textContent = items.length;
+    if (!items.length) {
+      list.innerHTML = '<div class="muted">Стандарты ещё не добавлены.</div>';
+      return;
+    }
+    list.innerHTML = items.map(item => `
+      <div class="list-card">
+        <div class="top">
+          <div>
+            <h4>#${item.id} ${escapeHtml(item.title || '')}</h4>
+          </div>
+          <div style="display:flex; gap:.5rem;">
+            <button class="btn btn-small" data-edit-standard="${item.id}">Редактировать</button>
+            <button class="btn danger btn-small" data-del-standard="${item.id}">Удалить</button>
+          </div>
+        </div>
+        <div class="muted">${escapeHtml(item.description || '')}</div>
+      </div>
+    `).join('');
+
+    list.querySelectorAll('[data-edit-standard]').forEach(btn => {
+      btn.onclick = () => openStandardEditor(+btn.dataset.editStandard);
+    });
+    list.querySelectorAll('[data-del-standard]').forEach(btn => {
+      btn.onclick = async () => {
+        if (!confirm('Удалить стандарт?')) return;
+        const resp = await fetch('api/standards.php?id=' + btn.dataset.delStandard, { method:'DELETE' });
+        if (resp.ok) {
+          await adminLoadStandardsList();
+          await loadCertificatesSection(true);
+        } else {
+          toast('Не удалось удалить стандарт','error');
+        }
+      };
+    });
+  } catch (e) {
+    list.innerHTML = '<div class="muted">Не удалось загрузить стандарты</div>';
+  }
+}
 async function adminInitPage() {
   const logged = await adminIsLogged();
   if (logged) adminRenderDashboard(); else adminRenderLogin();
@@ -875,7 +1799,11 @@ window.showPage = function(pageId){
   for (const fn of __showPageHooks) { try { fn(pageId); } catch(_){} }
 };
 
-__showPageHooks.push((pageId)=>{ if (pageId === 'admin') adminInitPage(); });
+__showPageHooks.push((pageId)=>{
+  if (pageId === 'admin') adminInitPage();
+  if (pageId === 'cases') loadCasesSection();
+  if (pageId === 'certs') loadCertificatesSection();
+});
 __showPageHooks.push((pageId)=>{ if (pageId === 'about'){ bindStatsObserver(); loadPortfolio(); } });
 
 document.addEventListener('DOMContentLoaded', ()=>{
@@ -1382,24 +2310,32 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 async function loadPortfolio() {
+  const grid = document.getElementById('portfolioGrid');
+  if (!grid) return;
+  renderPortfolioSkeletons();
+
   try {
     const r = await fetch('api/portfolio.php');
     if (!r.ok) throw new Error('load_failed');
     const items = await r.json();
 
-    const grid = document.getElementById('portfolioGrid');
-    if (!grid) return;
+    if (!Array.isArray(items) || !items.length) {
+      grid.innerHTML = '<div class="data-state">Скоро здесь появятся новые проекты.</div>';
+      return;
+    }
+
     grid.innerHTML = items.map(it => `
-      <div class="portfolio-item">
-        ${it.image_path ? `<img src="${escapeHtml(it.image_path)}" alt="${escapeHtml(it.title)}" class="portfolio-img">` : `<div class="portfolio-img" style="background:#2a2a2a"></div>`}
+      <article class="portfolio-item" tabindex="0" role="article" aria-label="${escapeHtml(it.title)}">
+        ${it.image_path ? `<img src="${escapeHtml(it.image_path)}" alt="${escapeHtml(it.title)}" class="portfolio-img">` : `<div class="portfolio-img" role="presentation" aria-hidden="true"></div>`}
         <div class="portfolio-content">
           <h3>${escapeHtml(it.title)}</h3>
           <p>${escapeHtml(it.description)}</p>
         </div>
-      </div>
+      </article>
     `).join('');
   } catch(e){
     console.error('portfolio load failed', e);
+    grid.innerHTML = '<div class="data-state error">Не удалось загрузить портфолио. Попробуйте позже.</div>';
   }
 }
 
@@ -1462,13 +2398,27 @@ function openModal({title, bodyHTML, onSave}){
   host.classList.add('open');
   const saveBtn = host.querySelector('#modalSave');
   saveBtn.onclick = async () => {
-    try{ await onSave?.(); closeModal(); toast('Сохранено'); }
-    catch(err){ console.error(err); toast('Ошибка сохранения','error'); }
+    try {
+      await onSave?.();
+      closeModal();
+      toast('Сохранено');
+    } catch (err) {
+      console.error(err);
+      if (!err || !err.handled) {
+        toast('Ошибка сохранения','error');
+      }
+    }
   };
 }
 function closeModal(){
   const host = document.getElementById('modalHost');
   host.classList.remove('open');
+}
+
+function handledError(message = 'handled') {
+  const err = new Error(message);
+  err.handled = true;
+  return err;
 }
 
 // ===== styles for modal =====
@@ -1661,17 +2611,307 @@ async function openPortfolioEditor(id){
 
       // 2) замена изображения (если выбрано)
       const f = document.getElementById('peFile').files[0];
-      if (f){
-        const fd = new FormData();
-        fd.append('portfolio_id', id);
-        fd.append('image', f);
-        const ur = await fetch('api/upload_portfolio_image.php', { method:'POST', body: fd });
-        if (!ur.ok) throw new Error('port_img_failed');
-      }
+  if (f){
+    const fd = new FormData();
+    fd.append('portfolio_id', id);
+    fd.append('image', f);
+    const ur = await fetch('api/upload_portfolio_image.php', { method:'POST', body: fd });
+    if (!ur.ok) throw new Error('port_img_failed');
+  }
 
       await adminLoadPortfolioList();
       // перерисуем публичную сетку, если вкладка «about» активна
       if (document.querySelector('#about.page-section.active')) loadPortfolio();
     }
   });
+}
+
+async function openCaseEditor(id){
+  try {
+    const r = await fetch(`api/cases.php?id=${id}`);
+    if (!r.ok) throw new Error('load_failed');
+    const item = await r.json();
+
+    openModal({
+      title: `Редактирование кейса #${id}`,
+      bodyHTML: `
+        <div class="grid">
+          <div class="row">
+            <label>Отрасль / тег</label>
+            <input id="ceTag" class="form-control" value="${escapeHtml(item.tag || '')}">
+          </div>
+          <div class="row">
+            <label>Заголовок</label>
+            <input id="ceTitle" class="form-control" value="${escapeHtml(item.title || '')}">
+          </div>
+          <div class="row">
+            <label>Проблема</label>
+            <textarea id="ceProblem" class="form-control" rows="3">${escapeHtml(item.problem || '')}</textarea>
+          </div>
+          <div class="row">
+            <label>Решение</label>
+            <textarea id="ceSolution" class="form-control" rows="3">${escapeHtml(item.solution || '')}</textarea>
+          </div>
+          <div class="row">
+            <label>Результат</label>
+            <textarea id="ceResult" class="form-control" rows="3">${escapeHtml(item.result_text || '')}</textarea>
+          </div>
+          <div class="row">
+            <label>Цитата клиента</label>
+            <textarea id="ceQuote" class="form-control" rows="3">${escapeHtml(item.quote_text || '')}</textarea>
+          </div>
+          <div class="row" style="display:grid; gap:.75rem; grid-template-columns:repeat(auto-fit,minmax(200px,1fr));">
+            <div>
+              <label>Автор</label>
+              <input id="ceAuthor" class="form-control" value="${escapeHtml(item.quote_author || '')}">
+            </div>
+            <div>
+              <label>Компания</label>
+              <input id="ceCompany" class="form-control" value="${escapeHtml(item.quote_company || '')}">
+            </div>
+          </div>
+        </div>
+      `,
+      onSave: async () => {
+        const payload = {
+          tag: document.getElementById('ceTag').value.trim(),
+          title: document.getElementById('ceTitle').value.trim(),
+          problem: document.getElementById('ceProblem').value.trim(),
+          solution: document.getElementById('ceSolution').value.trim(),
+          result: document.getElementById('ceResult').value.trim(),
+          quote_text: document.getElementById('ceQuote').value.trim(),
+          quote_author: document.getElementById('ceAuthor').value.trim(),
+          quote_company: document.getElementById('ceCompany').value.trim()
+        };
+        if (!payload.title) {
+          toast('Добавьте заголовок кейса','warn');
+          throw handledError('case_title_required');
+        }
+        const resp = await fetch(`api/cases.php?id=${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        if (!resp.ok) throw new Error('update_failed');
+        await adminLoadCasesList();
+        await loadCasesSection(true);
+      }
+    });
+  } catch (e) {
+    console.error(e);
+    toast('Не удалось открыть кейс','error');
+  }
+}
+
+async function openTestimonialEditor(id){
+  try {
+    const r = await fetch(`api/testimonials.php?id=${id}`);
+    if (!r.ok) throw new Error('load_failed');
+    const item = await r.json();
+
+    openModal({
+      title: `Редактирование отзыва #${id}`,
+      bodyHTML: `
+        <div class="grid">
+          <div class="row">
+            <label>Текст отзыва</label>
+            <textarea id="teQuote" class="form-control" rows="4">${escapeHtml(item.quote_text || '')}</textarea>
+          </div>
+          <div class="row">
+            <label>Автор</label>
+            <input id="teAuthor" class="form-control" value="${escapeHtml(item.author || '')}">
+          </div>
+          <div class="row">
+            <label>Должность</label>
+            <input id="teRole" class="form-control" value="${escapeHtml(item.role_title || '')}">
+          </div>
+          <div class="row">
+            <label>Компания</label>
+            <input id="teCompany" class="form-control" value="${escapeHtml(item.company || '')}">
+          </div>
+        </div>
+      `,
+      onSave: async () => {
+        const payload = {
+          quote_text: document.getElementById('teQuote').value.trim(),
+          author: document.getElementById('teAuthor').value.trim(),
+          role_title: document.getElementById('teRole').value.trim(),
+          company: document.getElementById('teCompany').value.trim()
+        };
+        if (!payload.quote_text) {
+          toast('Введите текст отзыва','warn');
+          throw handledError('testimonial_required');
+        }
+        const resp = await fetch(`api/testimonials.php?id=${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        if (!resp.ok) throw new Error('update_failed');
+        await adminLoadTestimonialsList();
+        await loadCasesSection(true);
+      }
+    });
+  } catch (e) {
+    console.error(e);
+    toast('Не удалось открыть отзыв','error');
+  }
+}
+
+async function openCertificateEditor(id){
+  try {
+    const r = await fetch(`api/certificates.php?id=${id}`);
+    if (!r.ok) throw new Error('load_failed');
+    const cert = await r.json();
+    const currentPath = cert.image_path || '';
+
+    openModal({
+      title: `Редактирование сертификата #${id}`,
+      bodyHTML: `
+        <div class="grid">
+          <div class="row">
+            <label>Название</label>
+            <input id="cTitle" class="form-control" value="${escapeHtml(cert.title || '')}">
+          </div>
+          <div class="row">
+            <label>Описание</label>
+            <textarea id="cDescription" class="form-control" rows="3">${escapeHtml(cert.description || '')}</textarea>
+          </div>
+          <div class="row">
+            <label>Альтернативный текст</label>
+            <input id="cAlt" class="form-control" value="${escapeHtml(cert.alt_text || '')}">
+          </div>
+          <div class="row">
+            <label>Текущее изображение</label>
+            ${currentPath ? `<div class="img-grid"><div class="img-cell"><img src="${escapeHtml(currentPath)}" alt=""></div></div>` : '<div class="muted">Файл не загружен</div>'}
+          </div>
+          <div class="row">
+            <label>Заменить изображение</label>
+            <input id="cFile" type="file" accept="image/*" class="form-control">
+          </div>
+        </div>
+      `,
+      onSave: async () => {
+        const title = document.getElementById('cTitle').value.trim();
+        if (!title) {
+          toast('Название сертификата обязательно','warn');
+          throw handledError('certificate_title_required');
+        }
+        const description = document.getElementById('cDescription').value.trim();
+        const alt = document.getElementById('cAlt').value.trim();
+        const resp = await fetch(`api/certificates.php?id=${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title,
+            description,
+            alt_text: alt,
+            image_path: currentPath
+          })
+        });
+        if (!resp.ok) throw new Error('update_failed');
+
+        const file = document.getElementById('cFile').files[0];
+        if (file) {
+          const fd = new FormData();
+          fd.append('certificate_id', id);
+          fd.append('image', file);
+          const uploadResp = await fetch('api/upload_certificate_image.php', { method: 'POST', body: fd });
+          if (!uploadResp.ok) throw new Error('upload_failed');
+        }
+
+        await adminLoadCertificatesList();
+        await loadCertificatesSection(true);
+      }
+    });
+  } catch (e) {
+    console.error(e);
+    toast('Не удалось открыть сертификат','error');
+  }
+}
+
+async function openPartnerEditor(id){
+  try {
+    const r = await fetch(`api/partners.php?id=${id}`);
+    if (!r.ok) throw new Error('load_failed');
+    const partner = await r.json();
+
+    openModal({
+      title: `Редактирование партнёра #${id}`,
+      bodyHTML: `
+        <div class="grid">
+          <div class="row">
+            <label>Название партнёра</label>
+            <input id="paName" class="form-control" value="${escapeHtml(partner.name || '')}">
+          </div>
+          <div class="row">
+            <label>Описание / специализация</label>
+            <textarea id="paDescription" class="form-control" rows="3">${escapeHtml(partner.description || '')}</textarea>
+          </div>
+        </div>
+      `,
+      onSave: async () => {
+        const name = document.getElementById('paName').value.trim();
+        if (!name) {
+          toast('Укажите название партнёра','warn');
+          throw handledError('partner_name_required');
+        }
+        const description = document.getElementById('paDescription').value.trim();
+        const resp = await fetch(`api/partners.php?id=${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, description })
+        });
+        if (!resp.ok) throw new Error('update_failed');
+        await adminLoadPartnersList();
+        await loadCertificatesSection(true);
+      }
+    });
+  } catch (e) {
+    console.error(e);
+    toast('Не удалось открыть партнёра','error');
+  }
+}
+
+async function openStandardEditor(id){
+  try {
+    const r = await fetch(`api/standards.php?id=${id}`);
+    if (!r.ok) throw new Error('load_failed');
+    const standard = await r.json();
+
+    openModal({
+      title: `Редактирование стандарта #${id}`,
+      bodyHTML: `
+        <div class="grid">
+          <div class="row">
+            <label>Название стандарта</label>
+            <input id="stTitle" class="form-control" value="${escapeHtml(standard.title || '')}">
+          </div>
+          <div class="row">
+            <label>Описание</label>
+            <textarea id="stDescription" class="form-control" rows="3">${escapeHtml(standard.description || '')}</textarea>
+          </div>
+        </div>
+      `,
+      onSave: async () => {
+        const title = document.getElementById('stTitle').value.trim();
+        if (!title) {
+          toast('Название стандарта обязательно','warn');
+          throw handledError('standard_title_required');
+        }
+        const description = document.getElementById('stDescription').value.trim();
+        const resp = await fetch(`api/standards.php?id=${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ title, description })
+        });
+        if (!resp.ok) throw new Error('update_failed');
+        await adminLoadStandardsList();
+        await loadCertificatesSection(true);
+      }
+    });
+  } catch (e) {
+    console.error(e);
+    toast('Не удалось открыть стандарт','error');
+  }
 }

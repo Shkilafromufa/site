@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 240" role="img" aria-labelledby="title desc">
+  <title id="title">ISO 14001 Certificate Placeholder</title>
+  <desc id="desc">Схематичное изображение сертификата ISO 14001.</desc>
+  <defs>
+    <linearGradient id="g" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#1d3f2c"/>
+      <stop offset="1" stop-color="#16261a"/>
+    </linearGradient>
+  </defs>
+  <rect width="360" height="240" rx="18" fill="url(#g)" stroke="#00d4aa" stroke-width="3"/>
+  <rect x="28" y="32" width="304" height="176" rx="12" fill="none" stroke="#1c5b3f" stroke-width="2" stroke-dasharray="12 10"/>
+  <text x="50%" y="84" fill="#00d4aa" font-family="Roboto,Arial,sans-serif" font-size="32" font-weight="600" text-anchor="middle">ISO 14001</text>
+  <text x="50%" y="118" fill="#cdebdc" font-family="Roboto,Arial,sans-serif" font-size="16" text-anchor="middle">Экологический менеджмент</text>
+  <text x="50%" y="148" fill="#8ad2b0" font-family="Roboto,Arial,sans-serif" font-size="13" text-anchor="middle">Контроль выбросов · Энергоменеджмент</text>
+  <g transform="translate(108 160)">
+    <circle cx="30" cy="30" r="30" fill="#173423"/>
+    <path d="M30 12c10 12 10 24 0 36-10-12-10-24 0-36Z" fill="#00d4aa"/>
+    <text x="120" y="34" fill="#e7f7ed" font-family="Roboto,Arial,sans-serif" font-size="18" font-weight="500">Sustainability First</text>
+  </g>
+</svg>

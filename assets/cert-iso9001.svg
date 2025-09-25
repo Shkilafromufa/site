@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 240" role="img" aria-labelledby="title desc">
+  <title id="title">ISO 9001 Certificate Placeholder</title>
+  <desc id="desc">Схематичное изображение сертификата ISO 9001.</desc>
+  <defs>
+    <linearGradient id="g" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#2b2b2b"/>
+      <stop offset="1" stop-color="#1f1f1f"/>
+    </linearGradient>
+  </defs>
+  <rect width="360" height="240" rx="18" fill="url(#g)" stroke="#ffad00" stroke-width="3"/>
+  <rect x="28" y="32" width="304" height="176" rx="12" fill="none" stroke="#444" stroke-width="2" stroke-dasharray="8 8"/>
+  <text x="50%" y="88" fill="#ffad00" font-family="Roboto,Arial,sans-serif" font-size="32" font-weight="600" text-anchor="middle">ISO 9001</text>
+  <text x="50%" y="124" fill="#cfcfcf" font-family="Roboto,Arial,sans-serif" font-size="16" text-anchor="middle">Система менеджмента качества</text>
+  <text x="50%" y="156" fill="#888" font-family="Roboto,Arial,sans-serif" font-size="13" text-anchor="middle">Аудит TÜV Rheinland · 2025</text>
+  <g transform="translate(120 164)">
+    <rect width="120" height="36" rx="10" fill="#2f2f2f" stroke="#555"/>
+    <text x="60" y="24" fill="#ffad00" font-family="Roboto,Arial,sans-serif" font-size="14" text-anchor="middle">Quality Assured</text>
+  </g>
+</svg>
