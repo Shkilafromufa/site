@@ -66,6 +66,7 @@ async function loadServices() {
   services.forEach((s, i) => {
     const el = document.createElement('article');
     el.className = 'service-card';
+    el.classList.add('reveal');
     el.setAttribute('role', 'button');
     el.setAttribute('tabindex', '0');
     el.dataset.id = s.id;
@@ -116,7 +117,7 @@ async function loadServices() {
       } catch(_) {}
     });
   });
-
+revealScan(container);
   // делегирование кликов уже есть в твоём коде — можно убрать onCardClick
 }
 function trimDescription(text, minLen = 100) {
@@ -257,6 +258,12 @@ legacyContactForm?.addEventListener('submit', function (e) {
 });
 
 
+document.addEventListener('DOMContentLoaded', ()=>{
+  document.querySelectorAll('.hero-content > *').forEach(n=>{
+    n.classList.add('reveal');
+  });
+  revealScan(document.querySelector('.hero-content'));
+});
 
 document.addEventListener('DOMContentLoaded', loadServices);
 document.addEventListener('DOMContentLoaded', () => {
@@ -1675,3 +1682,99 @@ async function openPortfolioEditor(id){
     }
   });
 }
+
+
+// === Header enter + Scroll Reveal ===
+function initHeaderEnter(){
+  const header = document.querySelector('.site-header');
+  if (!header) return;
+  // двойной rAF – чтобы браузер успел применить начальные стили (скрытую позицию)
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    header.classList.add('is-in');
+  }));
+}
+
+function initScrollReveal(){
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  // Какие элементы подсвечиваем при прокрутке:
+  const SELECTOR = [
+    '.service-card',      // список услуг (grid)
+    '.card',              // общие карточки
+    '.steps li',          // этапы/процесс
+    '.stat',              // карточки статистики
+    '.gallery-grid .g-item',
+    '.list-card',         // админ-список
+    '.section-title',
+    '.about-grid > *',
+    '.contact-grid > *',
+    '.resource-item',
+    '.portfolio-item'
+  ].join(',');
+
+  // Помечаем стартовые элементы
+  document.querySelectorAll(SELECTOR).forEach(el=>{
+    el.classList.add('reveal');
+  });
+
+  if (reduce) {
+    // Без анимаций – показать всё сразу
+    document.querySelectorAll('.reveal').forEach(el=>el.classList.add('is-in'));
+    return;
+  }
+
+  const io = new IntersectionObserver((entries)=>{
+    entries.forEach(entry=>{
+      if (entry.isIntersecting){
+        const el = entry.target;
+        // поддержка «ступенчатого» появления для гридов
+        const parent = el.parentElement;
+        if (parent && parent.classList.contains('reveal-child')) {
+          // уже обработано контейнером
+        }
+        el.classList.add('is-in');
+        io.unobserve(el);
+      }
+    });
+  }, { threshold: 0.12, rootMargin: '0px 0px -10% 0px' });
+
+  // Индекс-задержка внутри контейнеров — удобно для гридов
+  const staggerParents = [
+    '#services-container',
+    '.cards',
+    '.steps',
+    '.stats-grid',
+    '.gallery-grid',
+    '#pList',
+    '#aList',
+    '#portfolioGrid'
+  ];
+  staggerParents.forEach(sel=>{
+    const box = document.querySelector(sel);
+    if (!box) return;
+    box.classList.add('reveal-child');
+    [...box.children].forEach((child, i)=>{
+      child.style.setProperty('--reveal-delay', (i*40)+'ms'); // 40мс шаг
+      child.classList.add('reveal');
+    });
+  });
+
+  document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+}
+
+// Переинициализация для динамически подставляемого контента
+function revealScan(root=document){
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const all = root.querySelectorAll('.reveal, .reveal-child > *');
+  if (reduce){ all.forEach(el=>el.classList.add('is-in')); return; }
+  // Переинициализируем наблюдатель локально
+  const io = new IntersectionObserver((entries)=>{
+    entries.forEach(e=>{ if (e.isIntersecting){ e.target.classList.add('is-in'); io.unobserve(e.target); } });
+  }, { threshold: 0.12, rootMargin: '0px 0px -10% 0px' });
+  all.forEach(el=>io.observe(el));
+}
+
+// Запуск после загрузки DOM
+document.addEventListener('DOMContentLoaded', ()=>{
+  initHeaderEnter();
+  initScrollReveal();
+});

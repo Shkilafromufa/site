@@ -556,3 +556,39 @@ img,video{ max-width:100%; display:block; }
   border:1px solid rgba(255,255,255,.12); background:#222;
 }
 .thumb--ph{ width:56px; height:40px; border-radius:6px; border:1px dashed rgba(255,255,255,.15);}
+
+
+
+/* === Header enter animation === */
+.site-header{
+  transform: translateY(-24px);
+  opacity: 0;
+  transition: transform .48s cubic-bezier(.22,.61,.36,1), opacity .48s ease;
+}
+.site-header.is-in{
+  transform: translateY(0);
+  opacity: 1;
+}
+
+/* === Scroll reveal (base) === */
+.reveal,
+.reveal-child > *{
+  opacity: 0;
+  transform: translateY(16px);
+  transition: opacity .48s ease, transform .48s cubic-bezier(.22,.61,.36,1);
+  will-change: transform, opacity;
+}
+.reveal.is-in,
+.reveal-child > *.is-in{
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* stagger через кастомное свойство (можно не трогать) */
+.reveal-child > *{ transition-delay: var(--reveal-delay, 0ms); }
+
+/* режим «меньше анимаций» — показать всё сразу */
+@media (prefers-reduced-motion: reduce){
+  .site-header{ transform:none !important; opacity:1 !important; transition:none !important; }
+  .reveal, .reveal-child > *{ opacity:1 !important; transform:none !important; transition:none !important; }
+}
