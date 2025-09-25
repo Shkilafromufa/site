@@ -288,6 +288,78 @@
         <section id="cases" class="page-section" aria-labelledby="casesTitle">
             <div class="container">
                 <h2 class="section-title" id="casesTitle">Кейсы и отзывы</h2>
+                <div class="cases-grid" id="casesGrid" aria-live="polite">
+                    <article class="case-card case-card--skeleton" aria-hidden="true">
+                        <header class="case-head">
+                            <span class="case-tag skeleton-pill"></span>
+                            <h3 class="skeleton-line skeleton-line--title"></h3>
+                        </header>
+                        <dl class="case-details">
+                            <div>
+                                <dt class="skeleton-line tiny"></dt>
+                                <dd class="skeleton-line"></dd>
+                            </div>
+                            <div>
+                                <dt class="skeleton-line tiny"></dt>
+                                <dd class="skeleton-line"></dd>
+                            </div>
+                            <div>
+                                <dt class="skeleton-line tiny"></dt>
+                                <dd class="skeleton-line"></dd>
+                            </div>
+                        </dl>
+                        <blockquote class="case-quote">
+                            <p class="skeleton-line"></p>
+                            <cite class="skeleton-line tiny"></cite>
+                        </blockquote>
+                    </article>
+                    <article class="case-card case-card--skeleton" aria-hidden="true">
+                        <header class="case-head">
+                            <span class="case-tag skeleton-pill"></span>
+                            <h3 class="skeleton-line skeleton-line--title"></h3>
+                        </header>
+                        <dl class="case-details">
+                            <div>
+                                <dt class="skeleton-line tiny"></dt>
+                                <dd class="skeleton-line"></dd>
+                            </div>
+                            <div>
+                                <dt class="skeleton-line tiny"></dt>
+                                <dd class="skeleton-line"></dd>
+                            </div>
+                            <div>
+                                <dt class="skeleton-line tiny"></dt>
+                                <dd class="skeleton-line"></dd>
+                            </div>
+                        </dl>
+                        <blockquote class="case-quote">
+                            <p class="skeleton-line"></p>
+                            <cite class="skeleton-line tiny"></cite>
+                        </blockquote>
+                    </article>
+                    <article class="case-card case-card--skeleton" aria-hidden="true">
+                        <header class="case-head">
+                            <span class="case-tag skeleton-pill"></span>
+                            <h3 class="skeleton-line skeleton-line--title"></h3>
+                        </header>
+                        <dl class="case-details">
+                            <div>
+                                <dt class="skeleton-line tiny"></dt>
+                                <dd class="skeleton-line"></dd>
+                            </div>
+                            <div>
+                                <dt class="skeleton-line tiny"></dt>
+                                <dd class="skeleton-line"></dd>
+                            </div>
+                            <div>
+                                <dt class="skeleton-line tiny"></dt>
+                                <dd class="skeleton-line"></dd>
+                            </div>
+                        </dl>
+                        <blockquote class="case-quote">
+                            <p class="skeleton-line"></p>
+                            <cite class="skeleton-line tiny"></cite>
+=======
                 <div class="cases-grid">
                     <article class="case-card">
                         <header class="case-head">
@@ -367,6 +439,10 @@
 
                 <div class="testimonials" role="region" aria-labelledby="testimonialsTitle">
                     <h3 id="testimonialsTitle">Что говорят клиенты</h3>
+                    <div class="testimonial-list" id="testimonialsList" aria-live="polite">
+                        <figure class="testimonial-card testimonial-card--skeleton" aria-hidden="true"></figure>
+                        <figure class="testimonial-card testimonial-card--skeleton" aria-hidden="true"></figure>
+                        <figure class="testimonial-card testimonial-card--skeleton" aria-hidden="true"></figure>
                     <div class="testimonial-list">
                         <figure class="testimonial-card">
                             <blockquote>
@@ -404,6 +480,10 @@
             <div class="container">
                 <h2 class="section-title" id="certsTitle">Сертификаты, партнёры и стандарты</h2>
                 <div class="certs-layout">
+                    <div class="certs-gallery" id="certsGallery" role="list" aria-live="polite">
+                        <article class="certificate-card certificate-card--skeleton" role="listitem" aria-hidden="true"></article>
+                        <article class="certificate-card certificate-card--skeleton" role="listitem" aria-hidden="true"></article>
+                        <article class="certificate-card certificate-card--skeleton" role="listitem" aria-hidden="true"></article>
                     <div class="certs-gallery" role="list">
                         <article class="certificate-card" role="listitem">
                             <img src="assets/cert-iso9001.svg" alt="Скан сертификата ISO 9001" loading="lazy">
@@ -425,6 +505,10 @@
                     <aside class="certs-meta" aria-label="Партнёры и отрасли">
                         <div class="partners">
                             <h3>Ключевые партнёры</h3>
+                            <ul id="partnersList" aria-live="polite">
+                                <li class="skeleton-line"></li>
+                                <li class="skeleton-line"></li>
+                                <li class="skeleton-line"></li>
                             <ul>
                                 <li>GF Machining Solutions — оборудование для высокоточной обработки</li>
                                 <li>Uddeholm и Böhler — инструментальные стали премиум-класса</li>
@@ -433,6 +517,11 @@
                         </div>
                         <div class="sectors">
                             <h3>Работаем по стандартам</h3>
+                            <ul id="standardsList" aria-live="polite">
+                                <li class="skeleton-line"></li>
+                                <li class="skeleton-line"></li>
+                                <li class="skeleton-line"></li>
+=======
                             <ul>
                                 <li>GOST Р 57326-2016 — пресс-формы для литья пластмасс</li>
                                 <li>FDA CFR 21 part 820 — медицинские изделия</li>
