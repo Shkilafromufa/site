@@ -359,6 +359,80 @@
                         <blockquote class="case-quote">
                             <p class="skeleton-line"></p>
                             <cite class="skeleton-line tiny"></cite>
+=======
+                <div class="cases-grid">
+                    <article class="case-card">
+                        <header class="case-head">
+                            <span class="case-tag">Автопром</span>
+                            <h3>Сократили время запуска пресс-формы с 14 до 6 недель</h3>
+                        </header>
+                        <dl class="case-details">
+                            <div>
+                                <dt>Проблема</dt>
+                                <dd>Крупному автопроизводителю требовалась пресс-форма для панелей салона в сжатые сроки и с высоким классом поверхности.</dd>
+                            </div>
+                            <div>
+                                <dt>Решение</dt>
+                                <dd>Параллельное проектирование и производство узлов, цифровой двойник для проверки кинематики, ночные смены на 5-осевых станках.</dd>
+                            </div>
+                            <div>
+                                <dt>Результат</dt>
+                                <dd>Запуск пресс-формы на 8 недель раньше графика, отсутствие рекламаций в первые 50 000 циклов.</dd>
+                            </div>
+                        </dl>
+                        <blockquote class="case-quote">
+                            «Коллеги из Альтернативы сняли критическую задачу по срокам — мы смогли выйти в SOP вовремя и без доработок.»
+                            <cite>— Руководитель проекта, OEM-производитель</cite>
+                        </blockquote>
+                    </article>
+
+                    <article class="case-card">
+                        <header class="case-head">
+                            <span class="case-tag">Потребительская электроника</span>
+                            <h3>Повысили ресурс формы и снизили простой оборудования</h3>
+                        </header>
+                        <dl class="case-details">
+                            <div>
+                                <dt>Проблема</dt>
+                                <dd>Серийная форма для корпусов гаджетов требовала ремонта каждые 3 месяца и снижала эффективность линии.</dd>
+                            </div>
+                            <div>
+                                <dt>Решение</dt>
+                                <dd>Оптимизация системы охлаждения, замена материала вставок, внедрение сервиса предиктивного мониторинга.</dd>
+                            </div>
+                            <div>
+                                <dt>Результат</dt>
+                                <dd>Ресурс пресс-формы вырос в 2,4 раза, простой оборудования снизился на 37%.</dd>
+                            </div>
+                        </dl>
+                        <blockquote class="case-quote">
+                            «Теперь наши технологи планируют сервис не по авариям, а по данным. Это экономит десятки часов простаивания.»
+                            <cite>— Технический директор, производитель электроники</cite>
+                        </blockquote>
+                    </article>
+
+                    <article class="case-card">
+                        <header class="case-head">
+                            <span class="case-tag">Медицинская техника</span>
+                            <h3>Выполнили верификацию изделия под международные стандарты</h3>
+                        </header>
+                        <dl class="case-details">
+                            <div>
+                                <dt>Проблема</dt>
+                                <dd>Необходимо было адаптировать пресс-форму для деталей аппаратов ИВЛ под стандарты FDA и MDR.</dd>
+                            </div>
+                            <div>
+                                <dt>Решение</dt>
+                                <dd>Трассировка материалов, чистовые обработки в изолированной зоне, полная документация трассируемости и FAT-тесты.</dd>
+                            </div>
+                            <div>
+                                <dt>Результат</dt>
+                                <dd>Проект прошёл аудит с первого раза, партия изделий была сертифицирована для экспорта в ЕС и США.</dd>
+                            </div>
+                        </dl>
+                        <blockquote class="case-quote">
+                            «Команда взяла на себя не только механическую часть, но и бумажную — аудит прошёл без дополнительных запросов.»
+                            <cite>— Менеджер по качеству, медицинский холдинг</cite>
                         </blockquote>
                     </article>
                 </div>
@@ -369,6 +443,34 @@
                         <figure class="testimonial-card testimonial-card--skeleton" aria-hidden="true"></figure>
                         <figure class="testimonial-card testimonial-card--skeleton" aria-hidden="true"></figure>
                         <figure class="testimonial-card testimonial-card--skeleton" aria-hidden="true"></figure>
+                    <div class="testimonial-list">
+                        <figure class="testimonial-card">
+                            <blockquote>
+                                «Впервые видим, чтобы подрядчик на производстве приезжал с собственной командой наладчиков и доводил процесс до стабильного цикла.»
+                            </blockquote>
+                            <figcaption>
+                                <span class="author">Андрей Л., директор по производству</span>
+                                <span class="company">ПластикТех</span>
+                            </figcaption>
+                        </figure>
+                        <figure class="testimonial-card">
+                            <blockquote>
+                                «Они не просто отремонтировали форму, а подготовили инструкции по обслуживанию и обучили персонал смены.»
+                            </blockquote>
+                            <figcaption>
+                                <span class="author">Виктория П., руководитель пресс-цеха</span>
+                                <span class="company">Металформ</span>
+                            </figcaption>
+                        </figure>
+                        <figure class="testimonial-card">
+                            <blockquote>
+                                «Коммуникация прозрачная: еженедельные отчёты, общий чат, трекинг статусов деталей в MES.»
+                            </blockquote>
+                            <figcaption>
+                                <span class="author">Илья Д., менеджер проектов</span>
+                                <span class="company">InjecPro</span>
+                            </figcaption>
+                        </figure>
                     </div>
                 </div>
             </div>
@@ -382,6 +484,22 @@
                         <article class="certificate-card certificate-card--skeleton" role="listitem" aria-hidden="true"></article>
                         <article class="certificate-card certificate-card--skeleton" role="listitem" aria-hidden="true"></article>
                         <article class="certificate-card certificate-card--skeleton" role="listitem" aria-hidden="true"></article>
+                    <div class="certs-gallery" role="list">
+                        <article class="certificate-card" role="listitem">
+                            <img src="assets/cert-iso9001.svg" alt="Скан сертификата ISO 9001" loading="lazy">
+                            <h3>ISO 9001:2015</h3>
+                            <p>Система менеджмента качества подтверждена независимым аудитом.</p>
+                        </article>
+                        <article class="certificate-card" role="listitem">
+                            <img src="assets/cert-iso14001.svg" alt="Скан сертификата ISO 14001" loading="lazy">
+                            <h3>ISO 14001:2018</h3>
+                            <p>Экологический менеджмент и управление отходами на производстве.</p>
+                        </article>
+                        <article class="certificate-card" role="listitem">
+                            <img src="assets/cert-iatf16949.svg" alt="Скан сертификата IATF 16949" loading="lazy">
+                            <h3>IATF 16949</h3>
+                            <p>Сертифицированы для поставок в автопром по требованиям OEM.</p>
+                        </article>
                     </div>
 
                     <aside class="certs-meta" aria-label="Партнёры и отрасли">
@@ -391,6 +509,10 @@
                                 <li class="skeleton-line"></li>
                                 <li class="skeleton-line"></li>
                                 <li class="skeleton-line"></li>
+                            <ul>
+                                <li>GF Machining Solutions — оборудование для высокоточной обработки</li>
+                                <li>Uddeholm и Böhler — инструментальные стали премиум-класса</li>
+                                <li>Siemens NX и Mastercam — единая CAD/CAM-платформа</li>
                             </ul>
                         </div>
                         <div class="sectors">
@@ -399,6 +521,11 @@
                                 <li class="skeleton-line"></li>
                                 <li class="skeleton-line"></li>
                                 <li class="skeleton-line"></li>
+=======
+                            <ul>
+                                <li>GOST Р 57326-2016 — пресс-формы для литья пластмасс</li>
+                                <li>FDA CFR 21 part 820 — медицинские изделия</li>
+                                <li>AS 9100 — компоненты для авиационно-космической отрасли</li>
                             </ul>
                         </div>
                     </aside>

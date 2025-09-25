@@ -342,7 +342,58 @@ async function loadServices() {
         (inFlight < MAX_PARALLEL) ? run() : queue.push(run);
       });
     }
+  }
+}
 
+function renderPortfolioSkeletons(count = 4) {
+  const grid = document.getElementById('portfolioGrid');
+  if (!grid) return;
+  grid.innerHTML = '';
+  for (let i = 0; i < count; i++) {
+    const card = document.createElement('article');
+    card.className = 'portfolio-item portfolio-item--skeleton';
+    card.setAttribute('aria-hidden', 'true');
+    card.innerHTML = `
+      <div class="portfolio-img"></div>
+      <div class="portfolio-content">
+        <h3></h3>
+        <p></p>
+      </div>
+    `;
+    grid.appendChild(card);
+  }
+}
+
+async function loadServices() {
+  const container = document.getElementById('services-container');
+  if (!container) return;
+  renderServiceSkeletons();
+
+  try {
+    const res = await fetch('api/services.php');
+    if (!res.ok) throw new Error(`services list failed: ${res.status}`);
+    const list = await res.json();
+    services = Array.isArray(list) ? list : [];
+
+    container.innerHTML = '';
+
+    // ПУЛ конкарренси, чтобы не убить сервер доп.запросами
+    const MAX_PARALLEL = 4;
+    let inFlight = 0, queue = [];
+
+    function withLimit(fn) {
+      return new Promise((resolve) => {
+        const run = async () => {
+          inFlight++;
+          try { resolve(await fn()); }
+          finally {
+            inFlight--;
+            if (queue.length) queue.shift()();
+          }
+        };
+        (inFlight < MAX_PARALLEL) ? run() : queue.push(run);
+      });
+    }
     if (!services.length) {
       container.innerHTML = '<div class="data-state">Список услуг скоро пополнится. Мы уже работаем над обновлением.</div>';
       return;
@@ -368,6 +419,15 @@ async function loadServices() {
       // пока нет обложки — приятный градиент-заглушка (чтобы не прыгало)
       const fallback = `linear-gradient(135deg, rgba(255,173,0,.18), rgba(95,169,255,.18)), linear-gradient(135deg, #2a2a2a, #1e1e1e)`;
       el.style.setProperty('--bg', fallback);
+
+      // чипсы из первых 2-3 фич
+      const chips = el.querySelector('[data-chips]');
+      const feats = (s.features || []).slice(0, 3);
+      if (feats.length) {
+        chips.innerHTML = feats.map(f => `<span class="s-chip">${escapeHtml(f)}</span>`).join('');
+      }
+
+=======
 
       // чипсы из первых 2-3 фич
       const chips = el.querySelector('[data-chips]');
