@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 240" role="img" aria-labelledby="title desc">
+  <title id="title">IATF 16949 Certificate Placeholder</title>
+  <desc id="desc">Схематичное изображение сертификата IATF 16949.</desc>
+  <defs>
+    <linearGradient id="g" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#20304a"/>
+      <stop offset="1" stop-color="#141c2c"/>
+    </linearGradient>
+  </defs>
+  <rect width="360" height="240" rx="18" fill="url(#g)" stroke="#5fa9ff" stroke-width="3"/>
+  <rect x="30" y="34" width="300" height="172" rx="12" fill="none" stroke="#34516f" stroke-width="2" stroke-dasharray="10 8"/>
+  <text x="50%" y="88" fill="#5fa9ff" font-family="Roboto,Arial,sans-serif" font-size="30" font-weight="600" text-anchor="middle">IATF 16949</text>
+  <text x="50%" y="120" fill="#c8d9ef" font-family="Roboto,Arial,sans-serif" font-size="16" text-anchor="middle">Система качества автопрома</text>
+  <text x="50%" y="148" fill="#8aa7d6" font-family="Roboto,Arial,sans-serif" font-size="13" text-anchor="middle">PPAP · APQP · SPC</text>
+  <g transform="translate(96 162)">
+    <polygon points="0,36 42,0 84,36 126,0 168,36" fill="none" stroke="#5fa9ff" stroke-width="2"/>
+    <text x="84" y="32" fill="#c8d9ef" font-family="Roboto,Arial,sans-serif" font-size="16" text-anchor="middle">Automotive Grade</text>
+  </g>
+</svg>

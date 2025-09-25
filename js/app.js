@@ -37,87 +37,143 @@ document.querySelectorAll('.nav-link').forEach(link => {
 // Services
 let services = [];
 
-async function loadServices() {
-  const res = await fetch('api/services.php');
-  if (!res.ok) { console.error('services list failed', res.status); return; }
-  services = await res.json();
-
+function renderServiceSkeletons(count = 6) {
   const container = document.getElementById('services-container');
+  if (!container) return;
   container.innerHTML = '';
-
-  // ПУЛ конкарренси, чтобы не убить сервер доп.запросами
-  const MAX_PARALLEL = 4;
-  let inFlight = 0, queue = [];
-
-  function withLimit(fn) {
-    return new Promise((resolve) => {
-      const run = async () => {
-        inFlight++;
-        try { resolve(await fn()); }
-        finally {
-          inFlight--;
-          if (queue.length) queue.shift()();
-        }
-      };
-      (inFlight < MAX_PARALLEL) ? run() : queue.push(run);
-    });
-  }
-
-  services.forEach((s, i) => {
-    const el = document.createElement('article');
-    el.className = 'service-card';
-    el.setAttribute('role', 'button');
-    el.setAttribute('tabindex', '0');
-    el.dataset.id = s.id;
-
-    // базовая верстка
-    el.innerHTML = `
-      <div class="shine"></div>
+  for (let i = 0; i < count; i++) {
+    const skeleton = document.createElement('article');
+    skeleton.className = 'service-card service-card--skeleton';
+    skeleton.setAttribute('aria-hidden', 'true');
+    skeleton.innerHTML = `
       <div class="glass">
-        <h3>${escapeHtml(s.name)}</h3>
-<p>${escapeHtml(trimDescription(s.description))}</p>
-        <div class="s-chips" data-chips></div>
+        <div class="skeleton-line skeleton-line--title"></div>
+        <div class="skeleton-line"></div>
+        <div class="skeleton-line short"></div>
+        <div class="skeleton-chip-row">
+          <span class="skeleton-chip"></span>
+          <span class="skeleton-chip"></span>
+          <span class="skeleton-chip"></span>
+        </div>
       </div>
     `;
+    container.appendChild(skeleton);
+  }
+}
 
-    // пока нет обложки — приятный градиент-заглушка (чтобы не прыгало)
-    const fallback = `linear-gradient(135deg, rgba(255,173,0,.18), rgba(95,169,255,.18)), linear-gradient(135deg, #2a2a2a, #1e1e1e)`;
-    el.style.setProperty('--bg', fallback);
+function renderPortfolioSkeletons(count = 4) {
+  const grid = document.getElementById('portfolioGrid');
+  if (!grid) return;
+  grid.innerHTML = '';
+  for (let i = 0; i < count; i++) {
+    const card = document.createElement('article');
+    card.className = 'portfolio-item portfolio-item--skeleton';
+    card.setAttribute('aria-hidden', 'true');
+    card.innerHTML = `
+      <div class="portfolio-img"></div>
+      <div class="portfolio-content">
+        <h3></h3>
+        <p></p>
+      </div>
+    `;
+    grid.appendChild(card);
+  }
+}
 
-    // чипсы из первых 2-3 фич
-    const chips = el.querySelector('[data-chips]');
-    const feats = (s.features || []).slice(0, 3);
-    if (feats.length) {
-      chips.innerHTML = feats.map(f => `<span class="s-chip">${escapeHtml(f)}</span>`).join('');
+async function loadServices() {
+  const container = document.getElementById('services-container');
+  if (!container) return;
+  renderServiceSkeletons();
+
+  try {
+    const res = await fetch('api/services.php');
+    if (!res.ok) throw new Error(`services list failed: ${res.status}`);
+    const list = await res.json();
+    services = Array.isArray(list) ? list : [];
+
+    container.innerHTML = '';
+
+    // ПУЛ конкарренси, чтобы не убить сервер доп.запросами
+    const MAX_PARALLEL = 4;
+    let inFlight = 0, queue = [];
+
+    function withLimit(fn) {
+      return new Promise((resolve) => {
+        const run = async () => {
+          inFlight++;
+          try { resolve(await fn()); }
+          finally {
+            inFlight--;
+            if (queue.length) queue.shift()();
+          }
+        };
+        (inFlight < MAX_PARALLEL) ? run() : queue.push(run);
+      });
     }
 
-    // клики/клавиатура
-    el.addEventListener('click', () => openService(+s.id));
-    el.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openService(+s.id); }
-    });
-
-    container.appendChild(el);
-
-    // Если API уже отдаёт cover, ставим сразу:
-    if (s.cover) {
-      el.style.setProperty('--bg', `url("${s.cover}")`);
+    if (!services.length) {
+      container.innerHTML = '<div class="data-state">Список услуг скоро пополнится. Мы уже работаем над обновлением.</div>';
       return;
     }
 
-    // Иначе — подтянем превьюшку услуги (первая картинка) аккуратно:
-    withLimit(async () => {
-      try {
-        const rr = await fetch(`api/services.php?id=${s.id}`);
-        if (!rr.ok) return;
-        const full = await rr.json();
-        const firstImg = (full.images && full.images[0]?.path) || null;
-        if (firstImg) el.style.setProperty('--bg', `url("${firstImg}")`);
-      } catch(_) {}
-    });
-  });
+    services.forEach((s) => {
+      const el = document.createElement('article');
+      el.className = 'service-card';
+      el.setAttribute('role', 'button');
+      el.setAttribute('tabindex', '0');
+      el.dataset.id = s.id;
 
-  // делегирование кликов уже есть в твоём коде — можно убрать onCardClick
+      // базовая верстка
+      el.innerHTML = `
+        <div class="shine"></div>
+        <div class="glass">
+          <h3>${escapeHtml(s.name)}</h3>
+          <p>${escapeHtml(trimDescription(s.description))}</p>
+          <div class="s-chips" data-chips></div>
+        </div>
+      `;
+
+      // пока нет обложки — приятный градиент-заглушка (чтобы не прыгало)
+      const fallback = `linear-gradient(135deg, rgba(255,173,0,.18), rgba(95,169,255,.18)), linear-gradient(135deg, #2a2a2a, #1e1e1e)`;
+      el.style.setProperty('--bg', fallback);
+
+      // чипсы из первых 2-3 фич
+      const chips = el.querySelector('[data-chips]');
+      const feats = (s.features || []).slice(0, 3);
+      if (feats.length) {
+        chips.innerHTML = feats.map(f => `<span class="s-chip">${escapeHtml(f)}</span>`).join('');
+      }
+
+      // клики/клавиатура
+      el.addEventListener('click', () => openService(+s.id));
+      el.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openService(+s.id); }
+      });
+
+      container.appendChild(el);
+
+      // Если API уже отдаёт cover, ставим сразу:
+      if (s.cover) {
+        el.style.setProperty('--bg', `url("${s.cover}")`);
+        return;
+      }
+
+      // Иначе — подтянем превьюшку услуги (первая картинка) аккуратно:
+      withLimit(async () => {
+        try {
+          const rr = await fetch(`api/services.php?id=${s.id}`);
+          if (!rr.ok) return;
+          const full = await rr.json();
+          const firstImg = (full.images && full.images[0]?.path) || null;
+          if (firstImg) el.style.setProperty('--bg', `url("${firstImg}")`);
+        } catch(_) {}
+      });
+    });
+  } catch (error) {
+    console.error('services list failed', error);
+    services = [];
+    container.innerHTML = '<div class="data-state error">Не удалось загрузить услуги. Попробуйте обновить страницу позже.</div>';
+  }
 }
 function trimDescription(text, minLen = 100) {
   if (!text) return '';
@@ -139,14 +195,20 @@ function trimDescription(text, minLen = 100) {
 }
 function toggleNav() {
   const nav = document.getElementById('nav');
+  if (!nav) return;
   nav.classList.toggle('open');
-  document.body.classList.toggle('nav-open', nav.classList.contains('open'));
+  const isOpen = nav.classList.contains('open');
+  document.body.classList.toggle('nav-open', isOpen);
+  const toggle = document.getElementById('navToggle');
+  if (toggle) toggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
 }
 function closeNav() {
   const nav = document.getElementById('nav');
   if (!nav) return;
   nav.classList.remove('open');
   document.body.classList.remove('nav-open');
+  const toggle = document.getElementById('navToggle');
+  if (toggle) toggle.setAttribute('aria-expanded', 'false');
 }
 function onCardClick(e){
   const card = e.target.closest('.card-link');
@@ -1382,24 +1444,32 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 async function loadPortfolio() {
+  const grid = document.getElementById('portfolioGrid');
+  if (!grid) return;
+  renderPortfolioSkeletons();
+
   try {
     const r = await fetch('api/portfolio.php');
     if (!r.ok) throw new Error('load_failed');
     const items = await r.json();
 
-    const grid = document.getElementById('portfolioGrid');
-    if (!grid) return;
+    if (!Array.isArray(items) || !items.length) {
+      grid.innerHTML = '<div class="data-state">Скоро здесь появятся новые проекты.</div>';
+      return;
+    }
+
     grid.innerHTML = items.map(it => `
-      <div class="portfolio-item">
-        ${it.image_path ? `<img src="${escapeHtml(it.image_path)}" alt="${escapeHtml(it.title)}" class="portfolio-img">` : `<div class="portfolio-img" style="background:#2a2a2a"></div>`}
+      <article class="portfolio-item" tabindex="0" role="article" aria-label="${escapeHtml(it.title)}">
+        ${it.image_path ? `<img src="${escapeHtml(it.image_path)}" alt="${escapeHtml(it.title)}" class="portfolio-img">` : `<div class="portfolio-img" role="presentation" aria-hidden="true"></div>`}
         <div class="portfolio-content">
           <h3>${escapeHtml(it.title)}</h3>
           <p>${escapeHtml(it.description)}</p>
         </div>
-      </div>
+      </article>
     `).join('');
   } catch(e){
     console.error('portfolio load failed', e);
+    grid.innerHTML = '<div class="data-state error">Не удалось загрузить портфолио. Попробуйте позже.</div>';
   }
 }
 
