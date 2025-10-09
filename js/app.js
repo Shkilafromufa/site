@@ -385,6 +385,16 @@ function adminRenderDashboard() {
             <input id="aName" class="form-control" placeholder="Название услуги">
             <textarea id="aDesc" class="form-control" rows="4" placeholder="Описание услуги"></textarea>
             <textarea id="aFeat" class="form-control" rows="3" placeholder="Особенности (каждая с новой строки)"></textarea>
+            <label class="file-drop" id="aModelDrop">
+              <input id="aModelFile" type="file" accept=".glb,.gltf,.usdz" hidden>
+              <div class="file-drop-inner">
+                <div class="file-ic">🧩</div>
+                <div>
+                  <div class="file-main">Загрузить 3D-модель файлом</div>
+                  <div class="file-sub">.glb / .gltf / .usdz</div>
+                </div>
+              </div>
+            </label>
             <label class="file-drop" id="adminFileDrop">
               <input id="aImgs" type="file" accept="image/*" multiple hidden>
               <div class="file-drop-inner">
@@ -479,24 +489,57 @@ function adminRenderDashboard() {
 
   // Тулбар — раскрывашки «Добавить»
   function toggleCollapsible(id, btn, openText='Добавить', closeText='Скрыть'){
-    const box = document.getElementById(id);
-    const willOpen = !box.classList.contains('open');
+  const box = document.getElementById(id);
+  if (!box) return;
 
-    if (willOpen) {
-      // сначала показать, потом добавить класс, чтобы анимация сработала
-      box.hidden = false;
-      requestAnimationFrame(() => box.classList.add('open'));
-    } else {
-      // сначала убираем класс (анимация закрытия), а по окончании — прячем
+  const isOpen = box.classList.contains('open');
+
+  // гарантируем исходные стили (не зависят от .collapse)
+  box.style.overflow = 'hidden';
+
+  if (!isOpen) {
+    // ОТКРЫТЬ
+    box.hidden = false;                 // снимаем hidden
+    box.style.display = 'block';        // на случай .collapse {display:none}
+    box.style.maxHeight = '0px';
+    // следующий кадр — анимируем до контентной высоты
+    requestAnimationFrame(() => {
+      const target = box.scrollHeight;
+      box.style.transition = 'max-height .25s ease';
+      box.style.maxHeight = target + 'px';
+      box.classList.add('open');
+    });
+    // по окончании — чистим inline-стили
+    box.addEventListener('transitionend', () => {
+      box.style.maxHeight = '';
+      box.style.overflow = '';
+      box.style.transition = '';
+    }, { once: true });
+  } else {
+    // ЗАКРЫТЬ
+    const current = box.scrollHeight;
+    box.style.maxHeight = current + 'px';
+    // следующий кадр — сворачиваем
+    requestAnimationFrame(() => {
+      box.style.transition = 'max-height .25s ease';
+      box.style.maxHeight = '0px';
       box.classList.remove('open');
-      box.addEventListener('transitionend', () => { box.hidden = true; }, { once: true });
-    }
-
-    btn.classList.toggle('ghost', willOpen);
-    btn.classList.toggle('accent', !willOpen);
-    btn.textContent = willOpen ? closeText : openText;
-    btn.setAttribute('aria-expanded', String(willOpen));
+    });
+    box.addEventListener('transitionend', () => {
+      box.style.display = '';       // возвращаем по умолчанию
+      box.style.maxHeight = '';
+      box.style.overflow = '';
+      box.style.transition = '';
+      box.hidden = true;            // окончательно спрятать
+    }, { once: true });
   }
+
+  const willOpen = !isOpen;
+  btn.classList.toggle('ghost', willOpen);
+  btn.classList.toggle('accent', !willOpen);
+  btn.textContent = willOpen ? closeText : openText;
+  btn.setAttribute('aria-expanded', String(willOpen));
+}
 
   const addServiceCard = document.getElementById('addServiceCard');
   const addWorkCard    = document.getElementById('addWorkCard');
@@ -532,34 +575,49 @@ function adminRenderDashboard() {
     const files = document.getElementById('aImgs').files;
     if (!name || !description) { toast('Заполните название и описание','warn'); return; }
 
-    const r = await fetch('api/services.php', {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ name, description, features })
-    });
-    if (!r.ok) { toast('Ошибка при добавлении услуги','error'); return; }
-    const j = await r.json();
-    const newId = j?.id ?? j?.insert_id;
+   // создаём услугу с model_path (если указан)
+  const r = await fetch('api/services.php', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ name, description, features})
+  });
+  if (!r.ok) { toast('Ошибка при добавлении услуги','error'); return; }
+  const j = await r.json();
+  const newId = j?.id ?? j?.insert_id;
 
-    if (newId && files && files.length) {
-      for (const file of files) {
-        const fd = new FormData();
-        fd.append('service_id', newId);
-        fd.append('image', file);
-        await fetch('api/upload_service_image.php', { method:'POST', body: fd });
-      }
+  // изображения
+  if (newId && files && files.length) {
+    for (const file of files) {
+      const fd = new FormData();
+      fd.append('service_id', newId);
+      fd.append('image', file);
+      await fetch('api/upload_service_image.php', { method:'POST', body: fd });
     }
-    // очистка
-    document.getElementById('aName').value = '';
-    document.getElementById('aDesc').value = '';
-    document.getElementById('aFeat').value = '';
-    document.getElementById('aImgs').value = '';
-    toggleCollapsible('addServiceCard', openAddServiceBtn, 'Добавить услугу','Скрыть форму');
+  }
 
-    await adminLoadList();
-    await loadServices();
-    toast('Услуга добавлена!');
-  };
+  // файл модели (опционально)
+  const modelFile = document.getElementById('aModelFile')?.files?.[0];
+  if (newId && modelFile) {
+    const fd = new FormData();
+    fd.append('service_id', newId);
+    fd.append('model', modelFile);
+    await fetch('api/upload_service_model.php', { method:'POST', body: fd });
+  }
+
+  // очистка
+  document.getElementById('aName').value = '';
+  document.getElementById('aDesc').value = '';
+  document.getElementById('aFeat').value = '';
+  document.getElementById('aImgs').value = '';
+  const modelInput = document.getElementById('aModelFile');
+  if (modelInput) modelInput.value = '';
+
+  toggleCollapsible('addServiceCard', openAddServiceBtn, 'Добавить услугу','Скрыть форму');
+
+  await adminLoadList();
+  await loadServices();
+  toast('Услуга добавлена!');
+};
 
   // Добавление работы (перенёс сюда — чтобы не ловить null)
   document.getElementById('pAdd').onclick = async () => {
@@ -630,6 +688,60 @@ function adminRenderDashboard() {
 
   // стартуем с услуг
   adminLoadList();
+  // Init model drop (один файл)
+const modelDrop = document.getElementById('aModelDrop');
+if (modelDrop) {
+  const input = modelDrop.querySelector('#aModelFile');
+  const fmt = (b)=>{ const u=['Б','КБ','МБ','ГБ']; let i=0,n=b; while(n>=1024&&i<u.length-1){n/=1024;i++;} return `${n.toFixed(n<10?1:0)} ${u[i]}`; };
+
+  // динамический маленький список (один файл)
+  let chip;
+  input.addEventListener('change', ()=>{
+    modelDrop.classList.toggle('has-files', !!input.files.length);
+    if (!input.files.length) { if (chip) chip.remove(); return; }
+    const f = input.files[0];
+    if (!chip) {
+      chip = document.createElement('div');
+      chip.className = 'file-chip';
+      modelDrop.appendChild(chip);
+    }
+    chip.innerHTML = `<span>🧩</span><span class="name">${f.name}</span><span class="size">${fmt(f.size)}</span><button type="button" class="rm">✕</button>`;
+  });
+
+  modelDrop.addEventListener('click', (e) => {
+  // клик по кнопке удаления чипа
+  if (e.target.closest('.rm')) {
+    input.value = '';
+    modelDrop.classList.remove('has-files');
+    chip?.remove(); chip = null;
+    return;
+  }
+  // если контейнер — LABEL, нативный клик сам откроет диалог
+  if (modelDrop.tagName === 'LABEL') return;
+
+  // если клик напрямую по input — тоже ничего не делаем
+  if (e.target.tagName === 'INPUT') return;
+
+  // иначе программно открываем диалог (на случай, если контейнер не label)
+  input.click();
+});
+
+  ['dragenter','dragover'].forEach(ev=>{
+    modelDrop.addEventListener(ev, e=>{ e.preventDefault(); e.stopPropagation(); modelDrop.classList.add('drag'); });
+  });
+  ['dragleave','dragend','drop'].forEach(ev=>{
+    modelDrop.addEventListener(ev, e=>{ e.preventDefault(); e.stopPropagation(); modelDrop.classList.remove('drag'); });
+  });
+  modelDrop.addEventListener('drop',(e)=>{
+    const files = e.dataTransfer?.files;
+    if (!files || !files.length) return;
+    const dt = new DataTransfer();
+    dt.items.add(files[0]); // только один файл
+    input.files = dt.files;
+    input.dispatchEvent(new Event('change',{bubbles:true}));
+  });
+}
+
   // Init file drop for admin (multiple files with chips, like in drawer)
   const adminDrop = document.getElementById('adminFileDrop');
   if (adminDrop) {
@@ -797,11 +909,11 @@ async function adminLoadList() {
       <h4>#${s.id} ${escapeHtml(s.name)}</h4>
     </div>
     <div style="display:flex; gap:.5rem; align-items:center;">
-      <label class="btn ghost btn-small">
+      <label class="aside-link">
         Добавить фото
         <input type="file" accept="image/*" data-up-for="${s.id}" style="display:none">
       </label>
-      <button class="btn btn-small" data-edit="${s.id}">Редактировать</button>
+      <button class="aside-link" data-edit="${s.id}">Редактировать</button>
       <button class="btn danger btn-small" data-id="${s.id}">Удалить</button>
     </div>
   </div>
@@ -1069,42 +1181,184 @@ async function openService(id) {
     alert('Не удалось открыть услугу. Проверь путь к API в консоли.');
   }
 }
-
 function renderServicePage(s) {
   const wrap = document.getElementById('service-view');
 
-  const featuresHTML = (s.features && s.features.length)
-      ? `<ul class="feature-list">${s.features.map(f => `<li>${escapeHtml(f)}</li>`).join('')}</ul>`
-      : `<div class="muted">Особенности не указаны</div>`;
+  const modelPath = (s.model_path || '').trim();
+  const ext = modelPath.split('.').pop()?.toLowerCase();
+  const isRenderable3D = !!modelPath && (ext === 'glb' || ext === 'gltf'); // usdz не рендерится в браузере
+  const hasImages = Array.isArray(s.images) && s.images.length > 0;
 
-  const galleryHTML = (s.images && s.images.length)
-      ? `
-      <div class="gallery-grid">
-        ${s.images.map(img => `
-          <a href="${escapeHtml(img.path)}" class="g-item" target="_blank" rel="noopener">
-            <img src="${escapeHtml(img.path)}" alt="${escapeHtml(img.alt || s.name || '')}">
-          </a>
-        `).join('')}
+// разбиваем массив на блоки по 3–4 элементов
+function chunkFeatures(arr, size = 3) {
+  const chunks = [];
+  for (let i = 0; i < arr.length; i += size)
+    chunks.push(arr.slice(i, i + size));
+  return chunks;
+}
+
+// делим строку по "—" или ":" для заголовка/описания
+function splitFeatureParts(raw = '') {
+  const s = String(raw).trim();
+  const idx = Math.min(
+    s.indexOf('—') >= 0 ? s.indexOf('—') : Infinity,
+    s.indexOf(':') >= 0 ? s.indexOf(':') : Infinity
+  );
+  if (!isFinite(idx)) return { title: s, desc: '' };
+  return {
+    title: s.slice(0, idx).trim(),
+    desc: s.slice(idx + 1).trim()
+  };
+}
+
+const featuresHTML = (s.features && s.features.length)
+  ? chunkFeatures(s.features, 3).map(group => `
+      <div class="features-section">
+        <div class="features-grid">
+          ${group.map(fRaw => {
+            const { title, desc } = splitFeatureParts(fRaw);
+            return `
+              <div class="feature-box">
+                <div class="feature-title">${escapeHtml(title)}</div>
+                ${desc ? `<div class="feature-desc">${escapeHtml(desc)}</div>` : ''}
+              </div>
+            `;
+          }).join('')}
+        </div>
       </div>
-    `
-      : `<div class="muted">Фото пока нет</div>`;
+    `).join('')
+  : `<div class="muted">Особенности не указаны</div>`;
+
+  const galleryHTML = hasImages ? `
+    <div class="gallery-grid">
+      ${s.images.map(img => `
+        <a href="${escapeHtml(img.path)}" class="g-item" target="_blank" rel="noopener">
+          <img src="${escapeHtml(img.path)}" alt="${escapeHtml(img.alt || s.name || '')}">
+        </a>`).join('')}
+    </div>` : `<div class="muted">Фото пока нет</div>`;
+
+  const modelHTML = isRenderable3D ? `
+    <section id="modelSec" class="reveal three-card">
+      <header class="three-head">
+        <div class="title">3D-модель</div>
+        <span class="badge">${escapeHtml((ext || 'FILE').toUpperCase())}</span>
+      </header>
+
+      <div class="three-body">
+        <div class="mv-skel" id="mvSkel"></div>
+        <model-viewer
+          id="serviceModel"
+          class="mv-host"
+          src="${escapeHtml(modelPath)}"
+          alt="${escapeHtml(s.name || '3D модель')}"
+          camera-controls
+          auto-rotate
+          rotation-per-second="90deg"
+          touch-action="pan-y"
+          exposure="1"
+          shadow-intensity="1"
+          ar
+          ar-modes="webxr scene-viewer quick-look">
+        </model-viewer>
+      </div>
+
+      <div class="mv-toolbar">
+        <button class="mv-btn" id="mvReset">Сброс</button>
+        <label class="mv-speed">
+          <span>Скорость</span>
+          <input id="mvSpeed" type="range" min="15" max="150" step="5" value="90">
+        </label>
+      </div>
+
+      <div class="mv-error" id="mvErr" style="display:none">
+        Не удалось загрузить 3D-модель. Показана галерея ниже.
+      </div>
+    </section>` : '';
 
   wrap.innerHTML = `
     <article class="service-article">
       <h2 style="margin:0 0 .5rem">${escapeHtml(s.name || '')}</h2>
+      <br>
       <p style="font-size:1.05rem; line-height:1.7">${escapeHtml(s.description || '')}</p>
 
+      ${modelHTML || ''}
+
+      ${!isRenderable3D ? `
+        <hr class="hr-soft" style="margin:1.25rem 0">
+        <h3 style="margin:0 0 .5rem">${modelPath && ext === 'usdz' ? 'AR-модель (iOS) · Галерея' : 'Галерея'}</h3>
+        <br>
+        ${galleryHTML}
+      ` : ''}
+
       <hr class="hr-soft" style="margin:1.25rem 0">
-
-      <h3 style="margin:0 0 .5rem">Галерея</h3>
-      ${galleryHTML}
-
-      <hr class="hr-soft" style="margin:1.25rem 0">
-
-      <h3 style="margin:0 0 .5rem">Особенности</h3>
+      <h3 style="margin:0 0 .5rem">Компетенции</h3>
+      <br>
       ${featuresHTML}
     </article>
   `;
+
+  // >>> САМЫЙ ВАЖНЫЙ ШАГ: зарегистрировать новые .reveal, чтобы они стали видимыми
+  try { revealScan(wrap); } catch(_) {}
+
+  if (!isRenderable3D) {
+    // Если .usdz — можно подсказать: iOS откроет AR через кнопку AR
+    return;
+  }
+
+  // Гарантируем, что web-component загружен и определён
+  (async () => {
+    if (!window.customElements?.get('model-viewer')) {
+      await new Promise(res => {
+        const s = document.createElement('script');
+        s.type = 'module';
+        s.src  = 'https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js';
+        s.onload = res;
+        document.head.appendChild(s);
+      });
+    }
+    await window.customElements.whenDefined('model-viewer');
+
+    const mv   = document.getElementById('serviceModel');
+    const skel = document.getElementById('mvSkel');
+    const err  = document.getElementById('mvErr');
+
+    const hideSkel = () => { if (skel) skel.style.display = 'none'; };
+    const initialOrbit = mv.getAttribute('camera-orbit') || 'auto auto auto';
+    document.getElementById('mvReset')?.addEventListener('click', () => {
+      mv.setAttribute('camera-orbit', initialOrbit);
+      mv.setAttribute('camera-target', 'auto'); // вернуть фокус в центр
+      mv.setAttribute('field-of-view', 'auto'); // вернуть масштаб
+    });
+    // надёжнее: событие model-visibility и обычный load
+    mv?.addEventListener('model-visibility', hideSkel);
+    mv?.addEventListener('load', hideSkel);
+
+    mv?.addEventListener('error', (e) => {
+      console.warn('model-viewer error for', mv?.src, e);
+      hideSkel();
+      if (err) err.style.display = 'grid';
+      // Фоллбек: если нет галереи сверху — дорисуем её ниже
+      if (!wrap.querySelector('.gallery-grid')) {
+        const fb = document.createElement('div');
+        fb.innerHTML = `
+          <hr class="hr-soft" style="margin:1.25rem 0">
+          <h3 style="margin:0 0 .5rem">Галерея</h3>
+          ${galleryHTML}
+        `;
+        wrap.querySelector('.service-article')?.appendChild(fb);
+        revealScan(fb);
+      }
+    });
+
+    document.getElementById('mvAR')?.addEventListener('click', () => mv?.activateAR?.());
+    document.getElementById('mvReset')?.addEventListener('click', () => mv?.reset?.());
+
+    const speed = document.getElementById('mvSpeed');
+    speed?.addEventListener('input', (e) => {
+      const v = String(e.target.value || '90');
+      mv?.setAttribute('rotation-per-second', `${v}deg`);
+    });
+  })();
 }
 
 
@@ -1114,7 +1368,6 @@ document.addEventListener('click', (e) => {
   const a = e.target.closest('#backToServices');
   if (!a) return;
   e.preventDefault();
-  // убираем #service/ID из адресной строки и показываем список
   history.replaceState(null, '', location.pathname + location.search);
   showPage('services');
 });
@@ -1462,57 +1715,59 @@ function toast(msg, type='ok'){
     if (e.target.closest('[data-close]')) closeModal();
   });
 })();
-function openModal({title, bodyHTML, onSave}){
+function openModal({ title, bodyHTML, onSave, onOpen }) {
   const host = document.getElementById('modalHost');
+  const modal = host.querySelector('.modal');
+
+  // локальное закрытие — работает всегда
+  const doClose = () => {
+    host.classList.remove('open');
+  };
+
   host.querySelector('#modalTitle').textContent = title || '';
   host.querySelector('.modal-body').innerHTML = bodyHTML || '';
+
+  // Повесим закрытие на элементы с [data-close]
+  // (на случай, если модал уже был открыт раньше — сначала снимем старые)
+  host.querySelectorAll('[data-close]').forEach(btn => {
+    btn.onclick = (e) => { e.preventDefault(); doClose(); };
+  });
+
+  // onOpen сразу после вставки разметки
+  try { onOpen?.(); } catch (e) { console.error('onOpen failed:', e); }
+
   host.classList.add('open');
+
   const saveBtn = host.querySelector('#modalSave');
   saveBtn.onclick = async () => {
-    try{ await onSave?.(); closeModal(); toast('Сохранено'); }
-    catch(err){ console.error(err); toast('Ошибка сохранения','error'); }
+    try {
+      await onSave?.();
+      doClose();               // <-- не глобальный closeModal
+      toast('Сохранено');
+    } catch (err) {
+      console.error(err);
+      toast('Ошибка сохранения', 'error');
+    }
   };
-}
-function closeModal(){
-  const host = document.getElementById('modalHost');
-  host.classList.remove('open');
-}
 
-// ===== styles for modal =====
-(function injectModalCSS(){
-  if (document.getElementById('modalCSS')) return;
-  const s = document.createElement('style');
-  s.id = 'modalCSS';
-  s.textContent = `
-  #modalHost{ position:fixed; inset:0; display:none; z-index:4000; }
-  #modalHost.open{ display:block; }
-  #modalHost .modal-backdrop{ position:absolute; inset:0; background:rgba(0,0,0,.55); }
-  #modalHost .modal{
-    position:relative; z-index:1; width:min(840px,96vw);
-    margin:6vh auto; background:rgba(28,28,28,.95);
-    border:1px solid rgba(255,255,255,.08); border-radius:16px; overflow:hidden;
-    box-shadow:0 20px 60px rgba(0,0,0,.5);
-  }
-  .modal-head,.modal-foot{ display:flex; align-items:center; justify-content:space-between; gap:.6rem; padding:1rem; border-bottom:1px solid rgba(255,255,255,.06); }
-  .modal-foot{ border-top:1px solid rgba(255,255,255,.06); border-bottom:0; }
-  .modal-body{ padding:1rem; max-height:60vh; overflow:auto; display:grid; gap:.8rem; }
-  .modal .grid{ display:grid; gap:.75rem; grid-template-columns:1fr; }
-  .modal .row{ display:grid; gap:.4rem; }
-  .modal label{ font-size:.9rem; color:#cfcfcf; }
-  .modal .img-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(120px,1fr)); gap:.6rem; }
-  .modal .img-cell{ position:relative; }
-  .modal .img-cell img{ width:100%; aspect-ratio:4/3; object-fit:cover; border-radius:10px; border:1px solid rgba(255,255,255,.12); }
-  .modal .img-cell button{ position:absolute; top:6px; right:6px; }
-  `;
-  document.head.appendChild(s);
-})();
-
+  // клик по фону — закрыть
+  host.addEventListener('click', function onBackdrop(e){
+    if (e.target.classList?.contains('modal-backdrop')) {
+      doClose();
+    }
+  }, { once: true });
+}
+function closeModal(){ document.getElementById('modalHost')?.classList.remove('open'); }
+window.closeModal = closeModal;
 async function openServiceEditor(id){
-  // грузим детально
   const r = await fetch(`api/services.php?id=${id}`);
   if (!r.ok) { toast('Не удалось загрузить услугу','error'); return; }
   const s = await r.json();
-  const feats = (s.features||[]).join('\n');
+  const featsText = (s.features||[]).join('\n');
+
+  const ext = (s.model_path||'').split('.').pop()?.toLowerCase();
+  const isGLB = ext === 'glb' || ext === 'gltf';
+  const hasModel = !!s.model_path;
 
   openModal({
     title: `Редактирование услуги #${id}`,
@@ -1522,13 +1777,54 @@ async function openServiceEditor(id){
           <label>Название</label>
           <input id="seName" class="form-control" value="${escapeHtml(s.name||'')}" />
         </div>
+
         <div class="row">
           <label>Описание</label>
           <textarea id="seDesc" class="form-control" rows="5">${escapeHtml(s.description||'')}</textarea>
         </div>
+
         <div class="row">
           <label>Особенности (по одной в строке)</label>
-          <textarea id="seFeat" class="form-control" rows="4">${escapeHtml(feats)}</textarea>
+          <textarea id="seFeat" class="form-control" rows="4">${escapeHtml(featsText)}</textarea>
+        </div>
+
+        <div class="row">
+          <label>3D-модель</label>
+
+          <div class="admin-card" id="seModelInfo" style="padding:.75rem; display:${hasModel?'block':'none'};">
+            <div style="display:flex; align-items:center; gap:.5rem; flex-wrap:wrap;">
+              <span class="badge" id="seModelExt">${ext ? ext.toUpperCase() : 'FILE'}</span>
+              <a id="seModelLink" href="${escapeHtml(s.model_path||'')}" target="_blank" rel="noopener">Открыть файл</a>
+              ${isGLB ? '<span class="muted">предпросмотр ниже</span>' : '<span class="muted">USDZ не рендерится в браузере, доступен для AR</span>'}
+            </div>
+            ${isGLB ? `
+              <model-viewer
+                id="seMV"
+                src="${escapeHtml(s.model_path)}"
+                camera-controls auto-rotate exposure="1" shadow-intensity="1"
+                style="width:100%; height:280px; display:block; margin-top:.5rem;"
+                ar ar-modes="webxr scene-viewer quick-look">
+              </model-viewer>
+            ` : ''}
+          </div>
+
+          <div style="display:flex; gap:.5rem; align-items:center; flex-wrap:wrap; margin:.5rem 0 .25rem;">
+<button type="button" class="btn danger btn-small" id="btnDelModel"${hasModel ? '' : ' disabled'}>
+  Удалить модель
+</button>
+          </div>
+
+          <label class="file-drop" id="seModelDrop" style="margin-top:.25rem;">
+            <input id="seModelFile" type="file" accept=".glb,.gltf,.usdz" hidden>
+            <div class="file-drop-inner">
+              <div class="file-ic">🧩</div>
+              <div>
+                <div class="file-main" id="seModelTitle">${hasModel ? 'Заменить 3D-модель' : 'Загрузить 3D-модель'}</div>
+                <div class="file-sub">.glb / .gltf / .usdz</div>
+              </div>
+            </div>
+            <div class="file-list" id="seModelChip"></div>
+          </label>
         </div>
 
         <div class="row">
@@ -1541,23 +1837,111 @@ async function openServiceEditor(id){
               </div>
             `).join('')}
           </div>
+
           <label class="file-drop" id="seAddImgs">
             <input id="seFiles" type="file" accept="image/*" multiple hidden>
             <div class="file-drop-inner">
               <div class="file-ic">📎</div>
-              <div><div class="file-main">Добавить фото</div><div class="file-sub">перетащите сюда или нажмите</div></div>
+              <div>
+                <div class="file-main">Добавить фото</div>
+                <div class="file-sub">перетащите сюда или нажмите</div>
+              </div>
             </div>
             <div class="file-list" id="seFileList"></div>
           </label>
         </div>
       </div>
     `,
+    onOpen: () => {
+      // элементы UI для модели
+      const $delBtn   = document.getElementById('btnDelModel');
+      const $drop     = document.getElementById('seModelDrop');
+      const $file     = document.getElementById('seModelFile');
+      const $chipWrap = document.getElementById('seModelChip');
+      const $info     = document.getElementById('seModelInfo');
+      const $title    = document.getElementById('seModelTitle');
+
+      // удалить модель (один вопрос — одно действие)
+      if ($delBtn) {
+      $delBtn.addEventListener('click', async () => {
+      if ($delBtn.disabled) return;
+      if (!confirm('Удалить 3D-модель из этой услуги?')) return;
+
+      $delBtn.disabled = true;
+      try {
+        const r = await fetch(`api/delete_service_model.php?service_id=${id}`, { method: 'DELETE' });
+        const j = await r.json().catch(()=> ({}));
+        if (!r.ok || j?.status !== 'ok') throw new Error('del_failed');
+
+        // UI-обновление
+        $info?.remove();
+        if ($title) $title.textContent = 'Загрузить 3D-модель';
+        toast('Модель удалена');
+      } catch (e) {
+        console.error(e);
+        toast('Не удалось удалить модель','error');
+        $delBtn.disabled = false;
+      }
+
+      // обновим списки
+      await adminLoadList();
+      await loadServices();
+    });
+  }
+
+      // клик по дроп-зоне = открыть выбор файла
+      $drop?.addEventListener('click', (e) => {
+        if ((e.target instanceof HTMLElement) && e.target.closest('button')) return;
+        $file?.click();
+      });
+
+      // выбран файл — показать «чип»
+      $file?.addEventListener('change', () => {
+        $chipWrap.innerHTML = '';
+        const f = $file.files?.[0];
+        if (!f) return;
+        const li = document.createElement('div');
+        li.className = 'file-chip';
+        li.innerHTML = `
+          <span class="name">${escapeHtml(f.name)}</span>
+          <span class="size">${(f.size/1024/1024).toFixed(2)} МБ</span>
+          <button class="rm" aria-label="Отменить">✕</button>
+        `;
+        li.querySelector('.rm')?.addEventListener('click', () => {
+          $file.value = '';
+          $chipWrap.innerHTML = '';
+        });
+        $chipWrap.appendChild(li);
+      });
+
+      // удаление картинок (одинарное confirm)
+      document.getElementById('seGallery')?.addEventListener('click', async (e) => {
+        const btn = e.target.closest?.('button[data-del-img]');
+        if (!btn) return;
+        if (btn.dataset.busy === '1') return;
+        if (!confirm('Удалить изображение?')) return;
+
+        try {
+          btn.dataset.busy = '1';
+          const imgId = btn.getAttribute('data-del-img');
+          const resp = await fetch(`/api/delete_service_image.php?id=${imgId}`);
+          const data = await resp.json();
+          if (!resp.ok || data?.status !== 'ok') throw new Error(data?.error || 'delete_failed');
+          btn.closest('.img-cell')?.remove();
+        } catch (err) {
+          console.error(err);
+          toast('Ошибка удаления изображения','error');
+        } finally {
+          delete btn.dataset.busy;
+        }
+      });
+    },
     onSave: async () => {
       const name  = document.getElementById('seName').value.trim();
       const desc  = document.getElementById('seDesc').value.trim();
       const feats = document.getElementById('seFeat').value.split('\n').map(s=>s.trim()).filter(Boolean);
 
-      // 1) обновим текстовые поля (PUT/PATCH)
+      // 1) текст
       const up = await fetch(`api/services.php?id=${id}`, {
         method:'PUT',
         headers:{ 'Content-Type':'application/json' },
@@ -1565,7 +1949,7 @@ async function openServiceEditor(id){
       });
       if (!up.ok) throw new Error('update_failed');
 
-      // 2) загрузим новые картинки, если выбраны
+      // 2) фото (новые)
       const files = document.getElementById('seFiles').files;
       if (files && files.length){
         for (const f of files){
@@ -1577,52 +1961,87 @@ async function openServiceEditor(id){
         }
       }
 
+      // 3) модель — если выбрана для загрузки/замены
+      const mf = document.getElementById('seModelFile')?.files?.[0];
+      if (mf) {
+        const fd = new FormData();
+        fd.append('service_id', id);
+        fd.append('model', mf);
+        const ur = await fetch('api/upload_service_model.php', { method:'POST', body: fd });
+        if (!ur.ok) throw new Error('model_upload_failed');
+      }
+
       await adminLoadList();
       await loadServices();
     }
   });
 
-  // локальная обработка превью выбранных файлов
-  (function bindLocalFiles(){
-    const input = document.getElementById('seFiles');
-    const list  = document.getElementById('seFileList');
+  // ==== локальные бинды внутри модалки ====
+  (function bindModalLocalUI(){
     const fmt = (b)=>{ const u=['Б','КБ','МБ','ГБ']; let i=0,n=b; while(n>=1024&&i<u.length-1){n/=1024;i++;} return `${n.toFixed(n<10?1:0)} ${u[i]}`; };
-    const render = (files)=>{
-      list.innerHTML = '';
+
+    // — 3D модель: chip + очистка
+    const modelDrop = document.getElementById('seModelDrop');
+    const modelInput = document.getElementById('seModelFile');
+    const modelChip  = document.getElementById('seModelChip');
+
+    modelInput?.addEventListener('change', ()=>{
+      modelChip.innerHTML = '';
+      modelDrop.classList.toggle('has-files', !!modelInput.files.length);
+      if (!modelInput.files.length) return;
+      const f = modelInput.files[0];
+      const chip = document.createElement('div');
+      chip.className = 'file-chip';
+      chip.innerHTML = `<span>🧩</span><span class="name">${f.name}</span><span class="size">${fmt(f.size)}</span><button type="button" class="rm" aria-label="Удалить файл">✕</button>`;
+      chip.querySelector('.rm').addEventListener('click', (e)=>{
+        e.preventDefault(); e.stopPropagation();
+        modelInput.value = '';
+        modelDrop.classList.remove('has-files');
+        modelChip.innerHTML = '';
+      });
+      modelChip.appendChild(chip);
+    });
+
+    modelDrop?.addEventListener('click', (e)=>{
+      if (e.target.closest('.rm')) { e.preventDefault(); e.stopPropagation(); return; }
+      if (modelDrop.tagName !== 'LABEL') modelInput?.click();
+    });
+
+    // — изображения: список + удаление из выбранных
+    const imgInput = document.getElementById('seFiles');
+    const imgList  = document.getElementById('seFileList');
+    function renderImgs(files){
+      imgList.innerHTML = '';
       [...files].forEach((f,i)=>{
         const div = document.createElement('div');
         div.className = 'file-chip';
         div.innerHTML = `<span>📄</span><span class="name">${f.name}</span><span class="size">${fmt(f.size)}</span><button class="rm" data-i="${i}">✕</button>`;
-        list.appendChild(div);
+        imgList.appendChild(div);
       });
-    };
-    input?.addEventListener('change', ()=> render(input.files));
-    list?.addEventListener('click', (e)=>{
+    }
+    imgInput?.addEventListener('change', ()=> renderImgs(imgInput.files));
+    imgList?.addEventListener('click', (e)=>{
       const btn = e.target.closest('.rm'); if(!btn) return;
+      const idx = +btn.dataset.i;
       const dt = new DataTransfer();
-      [...input.files].forEach((f,i)=>{ if(i!=btn.dataset.i) dt.items.add(f); });
-      input.files = dt.files; render(input.files);
+      [...imgInput.files].forEach((f,i)=>{ if(i!==idx) dt.items.add(f); });
+      imgInput.files = dt.files;
+      renderImgs(imgInput.files);
+      e.preventDefault(); e.stopPropagation();
     });
-    document.getElementById('seAddImgs')?.addEventListener('click',(e)=>{
-      if (e.target.closest('.rm')) { e.preventDefault(); e.stopPropagation(); return; }
-      if (e.currentTarget.tagName !== 'LABEL') input.click();
-    });
+
+    // — удаление существующих картинок из галереи
+    const modalBody = document.querySelector('#modalHost .modal-body');
+    modalBody.onclick = async (e) => {
+      const btn = e.target.closest('[data-del-img]');
+      if (!btn) return;
+      if (!confirm('Удалить изображение?')) return;
+      const imgId = +btn.dataset.delImg;
+      const rr = await fetch(`api/service_image.php?id=${imgId}`, { method:'DELETE' });
+      if (!rr.ok){ toast('Не удалось удалить','error'); return; }
+      btn.closest('.img-cell')?.remove();
+    };
   })();
-
-  // удаление существующих изображений (потребуется небольшой PHP-эндпоинт, см. ниже)
-  const modalBody = document.querySelector('#modalHost .modal-body');
-  modalBody.onclick = async (e) => {
-    const btn = e.target.closest('[data-del-img]');
-    if (!btn) return;
-
-    if (!confirm('Удалить изображение?')) return;
-
-    const imgId = +btn.dataset.delImg;
-    const r = await fetch(`api/service_image.php?id=${imgId}`, { method:'DELETE' });
-    if (!r.ok){ toast('Не удалось удалить','error'); return; }
-
-    btn.closest('.img-cell')?.remove();
-  };
 }
 async function openPortfolioEditor(id){
   // детальный запрос по портфолио
@@ -1778,3 +2197,22 @@ document.addEventListener('DOMContentLoaded', ()=>{
   initHeaderEnter();
   initScrollReveal();
 });
+
+// Включаем анимацию, когда hero попадает в вьюпорт
+(function(){
+  const items = document.querySelectorAll('.reveal-side');
+  if (!items.length) return;
+
+  const enter = el => requestAnimationFrame(() => el.classList.add('is-in'));
+
+  // если IntersectionObserver доступен — анимируем при скролле в видимость
+  if ('IntersectionObserver' in window){
+    const io = new IntersectionObserver((ents)=>{
+      ents.forEach(e => { if (e.isIntersecting) { enter(e.target); io.unobserve(e.target); } });
+    }, { rootMargin: '0px 0px -10% 0px', threshold: 0.1 });
+    items.forEach(el => io.observe(el));
+  } else {
+    // фолбэк: показываем сразу после загрузки
+    items.forEach(enter);
+  }
+})();

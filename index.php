@@ -5,6 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ПрессФорм - Изготовление и ремонт пресс-форм</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <!-- Bootstrap 5 (CSS + bundle JS) -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script defer src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- model-viewer -->
+    <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
     <link rel="stylesheet" href="css/style.css">
     
 </head>
@@ -36,11 +41,11 @@
                 <img src="assets/1.jpg" alt="Производственное помещение" class="hero-bg">
                 <div class="overlay"></div>
                 <div class="container">
-                    <div class="hero-content">
-                        <h1>Профессиональное изготовление и ремонт пресс-форм</h1>
-                        <p>Более 10 лет опыта, 98% форм запускаются без доработок, расчет за 24 часа</p>
-                        <a href="#" class="btn accent" onclick="openPopup()">Связаться с нами</a>
-                    </div>
+                <div class="hero-content">
+                <h1 class="hero-title reveal-side">Профессиональное изготовление, доработка и ремонт пресс-форм</h1>
+                <p class="hero-sub reveal-side" style="--delay:120ms">Более 30 лет опыта, 98% форм запускаются без доработок</p>
+                <a href="#" class="btn accent reveal-side" style="--delay:220ms" onclick="openPopup()">Связаться с нами</a>
+                </div>
                 </div>
             </div>
 
@@ -54,40 +59,33 @@
                     </div>
                 </div>
             </div>
+                    <h2 class="section-title">Этапы работы</h2><br>
+            <ol class="flow">
+            <li class="flow-step">
+                <div class="flow-head"><span class="flow-num">1</span></div>
+                <p><strong>Получение заявки и технического задания, анализ чертежей и модели.</strong></p>
+            </li>
 
-            <!-- Process -->
-            <div class="process">
-                <div class="container">
-                    <h2 class="section-title">Пошаговый процесс работы</h2>
-                    <ul class="steps">
-                        <li>
-                            <div class="step-title">Получение ТЗ</div>
-                            <p>Анализ чертежей, требований к материалу и объему производства</p>
-                        </li>
-                        <li>
-                            <div class="step-title">3D-моделирование</div>
-                            <p>Создание детальной модели в CAD/CAM-среде с расчетом литевых каналов</p>
-                        </li>
-                        <li>
-                            <div class="step-title">Производство</div>
-                            <p>Обработка на CNC-станках с многоуровневым контролем качества</p>
-                        </li>
-                        <li>
-                            <div class="step-title">Сборка и тестирование</div>
-                            <p>Финишная сборка, полировка и пробные прессования</p>
-                        </li>
-                        <li>
-                            <div class="step-title">Запуск на производстве</div>
-                            <p>Установка и наладка формы на оборудовании клиента</p>
-                        </li>
-                        <li>
-                            <div class="step-title">Сопровождение</div>
-                            <p>Техническая поддержка в течение всего срока эксплуатации</p>
-                        </li>
-                    </ul>
-                </div>
-            </div>
+            <li class="flow-step">
+                <div class="flow-head"><span class="flow-num">2</span></div>
+                <p><strong>Консультация с инженером и диагностика состояния оснастки.</strong></p>
+            </li>
 
+            <li class="flow-step">
+                <div class="flow-head"><span class="flow-num">3</span></div>
+                <p><strong>Расчёт стоимости, сроков и согласование объёма работ.</strong></p>
+            </li>
+
+            <li class="flow-step">
+                <div class="flow-head"><span class="flow-num">4</span></div>
+                <p><strong>Ремонт, доработка или модернизация узлов по ТЗ.</strong></p>
+            </li>
+
+            <li class="flow-step no-title">
+                <div class="flow-head"><span class="flow-num">5</span></div>
+                <p><strong>Контроль качества и передача готового изделия заказчику.</strong></p>
+            </li>
+            </ol>
             <div class="gallery">
                 <div class="container">
                     <h2 class="section-title">Цикл производства</h2>
@@ -211,23 +209,19 @@
             </div>
             <div class="resources">
                 <div class="container">
-                    <h2 class="section-title">Наши ресурсы</h2>
+                    <h2 class="section-title">Производственные мощности</h2>
                     <div class="resources-grid">
                         <div class="resource-item">
                             <h4>Технологический парк</h4>
                             <p>5-осевые обрабатывающие центры (X = 1000 мм) и проволочно-вырезные станки до 0,005 мм точности</p>
                         </div>
                         <div class="resource-item">
-                            <h4>Лазерные системы</h4>
-                            <p>Парк шлифовальных и лазерных систем с ЧПУ для высокоточной обработки</p>
+                            <h4>__</h4>
+                            <p>Лазерная и дугавая сварка</p>
                         </div>
                         <div class="resource-item">
                             <h4>Контроль качества</h4>
-                            <p>Отдел контроля качества с координатно-измерительной машиной (CMM) и рентгеноскопией</p>
-                        </div>
-                        <div class="resource-item">
-                            <h4>Материалы</h4>
-                            <p>Склад европейских инструментальных сталей и порошковых составов</p>
+                            <p>Отдел контроля качества с координатно-измерительной машиной (CMM)</p>
                         </div>
                     </div>
                 </div>
@@ -239,9 +233,9 @@
       <div class="stat">
         <div class="top">
           <div class="icon">🏭</div>
-          <span class="number" data-target="33">0</span>
+          <span class="number" data-target="30">0</span>
         </div>
-        <div class="label">года опыта</div>
+        <div class="label">Года опыта</div>
       </div>
 
       <div class="stat">
@@ -249,31 +243,31 @@
           <div class="icon">👥</div>
           <span class="number" data-target="2100">0</span>
         </div>
-        <div class="label">сотрудников</div>
+        <div class="label">Сотрудников</div>
       </div>
 
       <div class="stat">
         <div class="top">
           <div class="icon">⚙️</div>
-          <span class="number" data-target="196">0</span>
+          <span class="number" data-target="350">0</span>
         </div>
-        <div class="label">единиц оборудования</div>
+        <div class="label">Парк ТПА</div>
       </div>
 
       <div class="stat">
         <div class="top">
           <div class="icon">📏</div>
-          <span class="number" data-target="98116" data-suffix="">0</span>
+          <span class="number" data-target="25672" data-suffix="">0</span>
         </div>
-        <div class="label">общая площадь в м²</div>
+        <div class="label">Общая площадь в м²</div>
       </div>
 
       <div class="stat">
         <div class="top">
-          <div class="icon">🚚</div>
-          <span class="number" data-target="50">0</span>
+          <div class="icon">🏭</div>
+          <span class="number" data-target="15">0</span>
         </div>
-        <div class="label">грузовых машин</div>
+        <div class="label">Координатно осевых станков</div>
       </div>
     </div>
   </div>

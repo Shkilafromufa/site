@@ -336,7 +336,7 @@ img,video{ max-width:100%; display:block; }
 /* ========= STATS AT COMPANY ========= */
 .stats{ position:relative; padding:3rem 0; overflow:hidden; }
 .stats::after{ content:""; position:absolute; inset:0; pointer-events:none; opacity:.06; background:repeating-linear-gradient(135deg, transparent 0 14px, #fff 14px 15px); mix-blend-mode:overlay; }
-.stats-grid{ display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:1.25rem; }
+.stats-grid{ display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:1.25rem; }
 .stat{ position:relative; isolation:isolate; border:1px solid rgba(255,255,255,.10); border-radius:16px; padding:1.25rem 1.25rem 1.1rem; backdrop-filter:blur(6px); transition:transform .18s ease, box-shadow .22s ease, border-color .18s ease; }
 .stat:hover{ transform:translateY(-4px); border-color:rgba(255,255,255,.18); box-shadow:0 16px 36px rgba(0,0,0,.35); }
 .stat .top{ display:flex; align-items:center; gap:.75rem; margin-bottom:.35rem; }
@@ -591,4 +591,668 @@ img,video{ max-width:100%; display:block; }
 @media (prefers-reduced-motion: reduce){
   .site-header{ transform:none !important; opacity:1 !important; transition:none !important; }
   .reveal, .reveal-child > *{ opacity:1 !important; transform:none !important; transition:none !important; }
+}
+
+
+/* ========= MODAL (edit service) ========= */
+/* Лочим скролл фона, когда открыт модал */
+html.modal-open, body.modal-open{ overflow:hidden; }
+
+/* Хост и затемнение */
+#modalHost{
+  position:fixed; inset:0; display:none; z-index:4000;
+}
+#modalHost.open{ display:block; }
+#modalHost .modal-backdrop{
+  position:absolute; inset:0; z-index:1;
+  background:rgba(0,0,0,.55);
+  backdrop-filter:blur(6px);
+  transition:opacity .28s ease;
+  opacity:1;
+}
+
+/* Диалог */
+#modalHost .modal{
+  display:block !important;             /* важно для твоей функции insert */
+  position:relative; z-index:2;
+  width:min(880px, 96vw);
+  margin: clamp(24px, 6vh, 72px) auto;
+  background:rgba(24,24,24,.92);
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:16px;
+  box-shadow:0 20px 60px rgba(0,0,0,.5);
+  overflow:hidden;
+
+  /* лёгкая «стеклянность» в духе остальных блоков */
+  backdrop-filter:blur(8px);
+  transform: translateY(12px) scale(.985);
+  opacity:0;
+  transition:
+    transform .48s cubic-bezier(.22,.61,.36,1),
+    opacity .48s ease,
+    box-shadow .25s ease, border-color .2s ease;
+}
+#modalHost.open .modal{
+  transform: translateY(0) scale(1);
+  opacity:1;
+}
+
+/* Шапка/футер */
+.modal-head,
+.modal-foot{
+  display:flex; align-items:center; justify-content:space-between; gap:.6rem;
+  padding:1rem;
+  background:rgba(255,255,255,.02);
+}
+.modal-head{ border-bottom:1px solid rgba(255,255,255,.06); }
+.modal-foot{ border-top:1px solid rgba(255,255,255,.06); }
+.modal-title{
+  display:flex; align-items:center; gap:.6rem;
+  font-size:1.05rem; font-weight:700; letter-spacing:.01em;
+}
+.modal-title::before{
+  content:""; width:12px; height:12px; border-radius:4px;
+  background:var(--accent);
+  box-shadow:0 0 0 4px rgba(255,173,0,.12);
+}
+
+/* Кнопка закрытия в стиле икон-кнопок */
+.modal-close{
+  width:36px; height:36px; display:grid; place-items:center;
+  border:1px solid rgba(255,255,255,.10);
+  border-radius:10px;
+  background:rgba(255,255,255,.04);
+  color:var(--text);
+  cursor:pointer;
+  transition:background .15s ease, transform .1s ease, border-color .18s ease;
+}
+.modal-close:hover{ background:rgba(255,255,255,.08); border-color:rgba(255,255,255,.16); }
+.modal-close:active{ transform:scale(.98); }
+
+/* Контент */
+.modal-body{
+  padding:1rem;
+  max-height: min(66vh, 70svh);   /* удобный вертикальный лэйаут */
+  overflow:auto;
+  display:grid; gap:.9rem;
+}
+
+/* Сетка и строки форм (совместимо с твоими форм-контролами) */
+.modal .grid{ display:grid; gap:.8rem; grid-template-columns:1fr; }
+.modal .row{ display:grid; gap:.45rem; }
+.modal label{ font-size:.9rem; color:#cfcfcf; }
+
+/* Инпуты — переиспользуем .form-control, доп. подсветка для модалки опционально */
+.modal .form-control{
+  background:#1c1c1c; border:1px solid #353535; color:var(--text);
+  padding:.8rem 1rem; border-radius:10px;
+}
+.modal .form-control:focus{
+  outline:none; border-color:var(--accent);
+  box-shadow:0 0 0 3px rgba(255,173,0,.15);
+}
+
+/* Галерея превью внутри модалки */
+.modal .img-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill, minmax(120px,1fr));
+  gap:.6rem;
+}
+.modal .img-cell{ position:relative; }
+.modal .img-cell img{
+  width:100%; aspect-ratio:4/3; object-fit:cover;
+  border-radius:10px; border:1px solid rgba(255,255,255,.12);
+}
+.modal .img-cell .icon-btn{
+  position:absolute; top:6px; right:6px;
+}
+
+/* Кнопки футера — твои .btn */
+.modal .btn + .btn{ margin-left:.5rem; }
+
+/* Hover/active подчистить рамку в духе карточек */
+#modalHost .modal:hover{
+  border-color:rgba(255,255,255,.12);
+  box-shadow:0 24px 66px rgba(0,0,0,.55);
+}
+
+/* Reduced motion — показать сразу без анимаций */
+@media (prefers-reduced-motion: reduce){
+  #modalHost .modal{ transform:none !important; opacity:1 !important; transition:none !important; }
+  #modalHost .modal-backdrop{ transition:none !important; }
+}
+
+/* Адаптив */
+@media (max-width:640px){
+  #modalHost .modal{ width:min(100vw, 96vw); margin: 16px auto; border-radius:14px; }
+  .modal-head, .modal-foot{ padding:.85rem; }
+  .modal-body{ padding:.85rem; max-height:min(70vh, 76svh); }
+}
+
+/* fix: убираем «подбородок» у модалки */
+#modalHost .modal{
+  display:grid !important;
+  grid-template-rows:auto 1fr auto;
+  max-height:min(86vh, 92svh);   /* ограничиваем всю модалку, а не тело */
+  margin: clamp(24px, 6vh, 72px) auto;
+}
+
+#modalHost .modal .modal-body{
+  max-height:none;               /* снимаем прежний лимит */
+  overflow:auto;                 /* скроллимся только внутри тела */
+  align-content:start;           /* не растягивать контент по высоте */
+}
+
+/* опционально — чуть плотнее футер/шапку на мобилках */
+@media (max-width:640px){
+  #modalHost .modal{ max-height:min(90vh, 96svh); }
+}
+/* Мобильный full-screen sheet */
+@media (max-width:640px){
+  #modalHost .modal{
+    position:fixed; inset:0;
+    width:100vw; max-height:100svh;
+    margin:0; border-radius:0;
+    grid-template-rows:auto 1fr auto;
+    /* удобнее палец тянуться снизу */
+    box-shadow:none; border-color:rgba(255,255,255,.06);
+  }
+  .modal-head,.modal-foot{ padding:.75rem .85rem; }
+  .modal-title{ font-size:1rem; }
+  .modal-body{
+    padding:.75rem .85rem;
+    /* чтобы не «подпрыгивал» контент при скролле */
+    overscroll-behavior:contain;
+  }
+  /* крупнее инпуты и тапы */
+  .modal .form-control{ padding:.9rem 1rem; font-size:1rem; border-radius:12px; }
+  .btn{ padding:.7rem 1rem; border-radius:12px; }
+  .btn-small{ padding:.55rem .85rem; font-size:.9rem; }
+}
+
+/* безопасные отступы под вырезы (iOS/Android) */
+@supports (padding: max(0px)){
+  @media (max-width:640px){
+    .modal-head{ padding-top: max(.75rem, env(safe-area-inset-top)); }
+    .modal-foot{ padding-bottom: max(.75rem, env(safe-area-inset-bottom)); }
+  }
+}
+
+/* Футер модалки «прилипает» на телефонах: кнопки всегда видны */
+@media (max-width:640px){
+  .modal-foot{
+    position:sticky; bottom:0; z-index:3;
+    background:rgba(24,24,24,.95);
+    backdrop-filter:blur(8px);
+    border-top:1px solid rgba(255,255,255,.08);
+  }
+  .modal .btn.wide{ width:100%; }
+}
+/* компактнее превью и сетки на мобилках */
+@media (max-width:640px){
+  .modal .img-grid{ grid-template-columns:repeat(auto-fill, minmax(92px,1fr)); gap:.5rem; }
+  .modal .img-cell img{ border-radius:8px; }
+  .file-drop{ padding:.75rem; border-radius:12px; }
+  .file-list{ grid-template-columns:repeat(auto-fit, minmax(120px,1fr)); gap:.4rem; }
+}
+
+/* защита от «жёстких» высот внутри модалки */
+.modal .file-drop,
+.modal .some-inner-fixed-height{ height:auto !important; max-height:100% !important; }
+
+/* Не скроллим фон на iOS */
+#modalHost.open{ touch-action:none; }
+html.modal-open, body.modal-open{ height:100%; }
+
+/* Большие тапы для иконок */
+.modal-close, .icon-btn{ width:40px; height:40px; }
+@media (max-width:640px){
+  .modal-close, .icon-btn{ width:36px; height:36px; }
+}
+/* Services: мобильная колонка, плотнее отступы, отключаем hover-эффекты на тачах */
+@media (max-width:720px){
+  .services{ padding:2rem 0; }
+  .cards{ grid-template-columns:1fr; gap:1rem; }
+  .card{
+    padding:1rem 1rem 1.1rem;
+    border-radius:12px;
+    box-shadow:0 8px 22px rgba(0,0,0,.28);
+  }
+  .card h3{ font-size:1.05rem; margin-bottom:.5rem; }
+  .card p{ font-size:.95rem; margin-bottom:.75rem; }
+  .card ul{ margin-top:.6rem; }
+  .card ul li{ padding:.25rem 0 .25rem 1.25rem; }
+  .card::before{ width:3px; }
+
+  /* убираем «подпрыгивание» на тачах */
+  .card:hover{ transform:none; box-shadow:0 8px 22px rgba(0,0,0,.28); border-color:#404040; }
+}
+
+/* мини-карточки списка услуг в админке */
+@media (max-width:720px){
+  #services-container{ grid-template-columns:1fr; gap:.75rem; }
+  .list-card{ padding:.85rem; border-radius:12px; }
+  .admin-actions{ gap:.4rem; flex-wrap:wrap; }
+}
+
+/* ——— Админ: фиксы адаптива «Услуг» ——— */
+
+/* разрешим перенос в тулбаре */
+.toolbar{ flex-wrap: wrap; }
+
+/* чтобы левый блок (поиск) занимал строку на мобиле */
+.toolbar-left{ flex: 1 1 280px; min-width: 0; }
+.toolbar-right{ flex: 0 0 auto; display:flex; align-items:center; gap:.5rem; }
+
+/* на узких — всё в столбик: сначала поиск, ниже кнопки */
+@media (max-width: 720px){
+  .toolbar{ gap:.6rem; }
+  .toolbar-left, .toolbar-right{ flex: 1 1 100%; }
+  .toolbar-right{ justify-content: flex-start; }
+  .toolbar .form-control{ min-width: 0; width: 100%; }
+}
+
+/* каретки списка услуг: верхняя строка может переноситься */
+.list-card .top{
+  display:flex; flex-wrap: wrap; gap:.5rem  .75rem;
+}
+
+/* «левая» и «правая» группы в .top не должны раздувать ширину */
+.list-card .top > div{ min-width: 0; }
+
+/* длинные названия не рвут вёрстку */
+.list-card h4{
+  max-width: 100%;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+
+/* кнопки в правой части .top не выталкивают строку */
+.list-card .top .btn,
+.list-card .top label.btn{
+  flex: 0 0 auto;
+}
+
+/* 1) Тулбар может переноситься, а дети — сжиматься */
+.toolbar{ flex-wrap: wrap; }
+.toolbar-left{ flex: 1 1 280px; min-width: 0; }
+.toolbar-right{ flex: 0 0 auto; display:flex; align-items:center; gap:.5rem; }
+
+/* 2) На мобиле — поиск на всю ширину, кнопки ниже */
+@media (max-width: 720px){
+  .toolbar{ gap:.6rem; }
+  .toolbar-left, .toolbar-right{ flex: 1 1 100%; min-width:0; }
+  .toolbar .form-control{ min-width:0; width:100%; }
+}
+
+/* 3) Шапка карточки услуги: разрешить перенос строк */
+.list-card .top{
+  display:flex;
+  flex-wrap: wrap;
+  gap:.5rem .75rem;
+  width:100%;
+}
+
+/* 4) Левый и правый блоки в .top не должны раздувать ширину */
+.list-card .top > div{ min-width:0; }
+
+/* 5) Длинное название не ломает вёрстку */
+.list-card h4{
+  max-width:100%;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+/* 6) Кнопочная группа не растягивает строку */
+.list-card .top .btn,
+.list-card .top label.btn{ flex:0 0 auto; }
+
+/* 7) Подстраховка: любые тексты в карточках не раздувают контейнер */
+.list-card, .list-card *{
+  min-width:0;
+  overflow-wrap:anywhere;
+  word-break:break-word;
+}
+
+/* 8) Сетке админки запретим «жёсткую» минимальную ширину */
+.admin-shell, .admin-workspace, .tab-panel{ min-width:0; }
+
+/* 9) На узких экранах точно складываем колонку в одну */
+@media (max-width: 900px){
+  .admin-shell{ grid-template-columns:1fr !important; }
+}
+
+/* 10) Последний рубильник от горизонтального скролла (если вдруг что-то ещё торчит) */
+@media (max-width: 720px){
+  html, body{ overflow-x:hidden; }
+}
+
+/* --- fix: кнопки в шапке карточки --- */
+
+/* сама шапка может переноситься */
+.list-card .top{
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  gap:.5rem .75rem;
+}
+
+/* левый блок (чекбокс+превью+заголовок) может сжиматься */
+.list-card .top > div:first-child{
+  min-width:0;
+}
+
+/* заголовок не распирает строку */
+.list-card h4{
+  max-width:100%;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+/* правый блок с кнопками — не растягиваем страницу */
+.list-card .top > div:last-child{
+  display:flex;
+  flex-wrap:wrap;         /* разрешаем перенос кнопок */
+  gap:.5rem;
+  align-items:center;
+  flex:0 0 auto;          /* не занимать лишнее место */
+  max-width:100%;
+}
+
+/* сами кнопки не ломают перенос и не «выпрыгивают» */
+.list-card .top > div:last-child .btn,
+.list-card .top > div:last-child label.btn{
+  flex:0 0 auto;
+  white-space:nowrap;
+}
+
+/* на мобиле уводим кнопки на вторую строку, растягиваем по ширине */
+@media (max-width: 720px){
+  .list-card .top > div:last-child{
+    width:100%;
+    justify-content:flex-start;
+  }
+}
+
+/* подстраховка от горизонтального скролла */
+.list-card, .list-card *{
+  min-width:0;
+  overflow-wrap:anywhere;
+  word-break:break-word;
+}
+
+/* === 3D / Model tab (matches site style) === */
+.three-card{
+  position:relative;
+  background:rgba(24,24,24,.9);
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:16px;
+  overflow:hidden;
+  box-shadow:0 18px 44px rgba(0,0,0,.35);
+}
+.three-card::after{
+  content:""; position:absolute; inset:0; pointer-events:none;
+  border-radius:inherit; padding:1px;
+  background:linear-gradient(135deg, rgba(255,173,0,.35), rgba(95,169,255,.28));
+  -webkit-mask:linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite:xor; mask-composite:exclude;
+  opacity:.75;
+}
+.three-head{
+  display:flex; align-items:center; justify-content:space-between;
+  gap:.6rem; padding:.8rem 1rem;
+  background:rgba(255,255,255,.02);
+  border-bottom:1px solid rgba(255,255,255,.06);
+}
+.three-head .title{ font-weight:700; letter-spacing:.01em; }
+.three-head .badge{
+  padding:.2rem .55rem; border-radius:999px;
+  background:rgba(0,0,0,.35); border:1px solid rgba(255,255,255,.14);
+  font-size:.8rem;
+}
+
+.three-body{ position:relative; }
+.mv-host{ width:100%; height:min(64vh,520px); display:block; background:#121212; }
+
+/* skeleton while model loads */
+.mv-skel{
+  position:absolute; inset:0; background:
+    linear-gradient(120deg, rgba(255,255,255,.06), rgba(255,255,255,.02), rgba(255,255,255,.06));
+  background-size:200% 200%; animation:mvsh 1.2s linear infinite;
+  border-bottom:1px solid rgba(255,255,255,.06);
+}
+@keyframes mvsh{ 0%{background-position:0 0} 100%{background-position:200% 0} }
+
+.mv-toolbar{
+  display:flex; gap:.5rem; align-items:center; justify-content:flex-end;
+  padding:.6rem .8rem; background:rgba(255,255,255,.02);
+  border-top:1px solid rgba(255,255,255,.06);
+}
+.mv-btn{
+  display:inline-flex; align-items:center; gap:.4rem;
+  padding:.5rem .75rem; border-radius:10px; border:1px solid rgba(255,255,255,.12);
+  background:rgba(255,255,255,.04); color:#eee; cursor:pointer;
+  transition:background .15s ease, border-color .15s ease, transform .1s ease, opacity .2s ease;
+  user-select:none;
+}
+.mv-btn:hover{ background:rgba(255,255,255,.08); border-color:rgba(255,255,255,.18); }
+.mv-btn:active{ transform:scale(.98); }
+.mv-btn.accent{ border-color:rgba(255,173,0,.45); background:rgba(255,173,0,.08); }
+
+/* speed toggle */
+.mv-speed{
+  display:inline-flex; align-items:center; gap:.35rem;
+  padding:.45rem .6rem; border-radius:10px;
+  border:1px solid rgba(255,255,255,.12); background:rgba(0,0,0,.35);
+  color:#ddd; font-size:.92rem;
+}
+.mv-speed input{ width:120px; accent-color:var(--accent); }
+
+/* error fallback */
+.mv-error{
+  display:grid; place-items:center; padding:1rem; color:#ddd;
+  border-top:1px solid rgba(255,255,255,.06);
+  background:rgba(255,0,0,.06);
+}
+
+/* small on phones */
+@media (max-width:640px){
+  .mv-host{ height: min(60vh, 420px); }
+  .mv-speed input{ width: 100px; }
+}
+/* Мобильный режим — кнопки в две строки, растягиваются */
+@media (max-width: 640px) {
+  .mv-toolbar {
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: .5rem .4rem;
+  }
+  .mv-btn, .mv-speed {
+    flex: 1 1 calc(50% - .5rem);
+  }
+  .mv-speed {
+    justify-content: space-between;
+    padding: .5rem .7rem;
+  }
+  .mv-speed input {
+    width: 80px;
+  }
+}
+/* Центрируем блок hero по горизонтали и выравниваем текст */
+.hero .container{ display:grid; place-items:center; height:100%; }
+.hero-content{ text-align:center; max-width:min(800px,92vw); }
+
+/* Красивый заголовок */
+.hero-title{
+  font-size:clamp(2.4rem, 5vw, 4rem);
+  line-height:1.05;
+  font-weight:800;
+  letter-spacing:.01em;
+  text-shadow:0 10px 30px rgba(0,0,0,.35);
+}
+
+/* Анимация “выползания” сбоку */
+.reveal-side{
+  opacity:0;
+  transform:translateX(-36px) skewX(-2deg);
+  transition:
+    transform .72s cubic-bezier(.22,.61,.36,1),
+    opacity .6s ease;
+  transition-delay: var(--delay, 0ms);
+  will-change: transform, opacity;
+}
+.reveal-side.is-in{
+  opacity:1;
+  transform:none;
+}
+
+@media (prefers-reduced-motion: reduce){
+  .reveal-side{ opacity:1 !important; transform:none !important; transition:none !important; }
+}
+
+
+/* НОВАЯ СЕТКА ДЛЯ КОМПЕТЕНЦИЙ */
+
+.features-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
+  gap:1.2rem;
+  margin:1rem 0 0;
+}
+
+/* общая база карточки */
+.feature-box{
+  position:relative;
+  background:linear-gradient(145deg, rgba(24,24,24,.95), rgba(30,30,30,.88));
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:16px;
+  padding:1.25rem 1.4rem 1.3rem;
+  box-shadow:0 10px 28px rgba(0,0,0,.25);
+  transition:transform .2s ease, box-shadow .25s ease, border-color .25s ease, background .25s ease;
+  overflow:hidden;
+}
+
+/* лёгкий “блик” фирменного цвета */
+.feature-box::before{
+  content:"";
+  position:absolute; inset:0;
+  border-radius:inherit;
+  padding:1px;
+  background:linear-gradient(135deg, rgba(255,173,0,.55), rgba(255,211,106,.25));
+  -webkit-mask:linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite:xor; mask-composite:exclude;
+  opacity:.6;
+  transition:opacity .25s ease;
+}
+.feature-box:hover::before{ opacity:1; }
+
+/* подсветка при наведении */
+.feature-box:hover{
+  transform:translateY(-4px);
+  border-color:rgba(255,173,0,.4);
+  /* box-shadow:0 18px 42px rgba(255,173,0,.25); */
+  background:linear-gradient(135deg, rgba(30,30,30,.96), rgba(32,32,32,.9));
+}
+
+.feature-title{
+  font-size:1.1rem;
+  font-weight:700;
+  color:#fff;
+  margin-bottom:.35rem;
+  letter-spacing:.01em;
+  text-shadow:0 4px 14px rgba(255,173,0,.25);
+}
+.feature-desc{
+  font-size:.96rem;
+  color:#ddd;
+  line-height:1.45;
+  opacity:.95;
+}
+
+
+
+/* группа разделяется визуально */
+.features-section{
+  display:grid;
+  gap:1.25rem;
+  margin-top:1.25rem;
+}
+.features-section + .features-section{
+  margin-top:2rem;
+  border-top:1px solid rgba(255,255,255,.06);
+  padding-top:2rem;
+}
+
+/* mobile */
+@media (max-width:640px){
+  .features-grid{ gap:.9rem; }
+  .feature-box{ padding:1rem 1.1rem; border-radius:14px; }
+  .feature-title{ font-size:1.02rem; }
+}
+
+/* ====== FLOW / SEQUENTIAL CARDS — adaptive 3/2/1 with smart arrows ====== */
+.process-flow{ background:var(--bg-light); padding:4rem 0; }
+
+.flow{
+  list-style:none; margin:2rem 2rem 0rem; padding:0;
+  display:grid; gap:1.4rem;
+  grid-template-columns:repeat(3, minmax(220px,1fr)); /* ≥1100px — 3 в ряд */
+}
+
+/* планшеты: 2 в ряд */
+@media (max-width:1099px){
+  .flow{ grid-template-columns:repeat(2, minmax(200px,1fr)); }
+}
+/* телефоны: 1 в ряд */
+@media (max-width:720px){
+  .flow{ grid-template-columns:1fr; }
+}
+
+.flow-step{
+  position:relative; overflow:hidden;
+  background:linear-gradient(145deg,rgba(24,24,24,.95),rgba(30,30,30,.9));
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:16px;
+  padding:1.15rem 1.25rem 1.25rem;
+  box-shadow:0 10px 26px rgba(0,0,0,.25);
+  transition:transform .2s ease,box-shadow .25s ease,border-color .25s ease;
+}
+.flow-step:hover{ transform:translateY(-4px); border-color:rgba(255,173,0,.38); box-shadow:0 16px 42px rgba(255,173,0,.25); }
+
+/* номер */
+.flow-num{
+  display:inline-grid; place-items:center; width:40px; height:40px; margin-bottom:.6rem;
+  border-radius:12px; font-weight:800; font-size:1.1rem; color:#111;
+  background:linear-gradient(135deg,#ffad00,#ffd36a); box-shadow:0 8px 18px rgba(255,173,0,.35);
+}
+/* текст (без заголовков — только жирный + описание) */
+.flow-step p{ margin:0; color:#fff; font-size:1.02rem; line-height:1.55; }
+.flow-step p b{ font-weight:800; }
+
+
+
+@media (max-width:1099px) and (min-width:721px){
+  .flow{
+    display:flex;
+    flex-wrap:wrap;
+    justify-content:center;
+    gap:1.4rem;
+  }
+  .flow-step{
+    flex:1 1 calc(50% - 1.4rem);
+    max-width:calc(50% - 1.4rem);
+  }
+}
+
+@media (max-width:720px){
+  .flow{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+  }
+  .flow-step{
+    width:100%;
+    max-width:500px; /* чтобы красиво по центру */
+  }
 }

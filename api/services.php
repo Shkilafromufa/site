@@ -30,8 +30,7 @@ if ($method === 'GET') {
         exit;
     }
 
-    // Список услуг с cover (обложкой)
-    // Работает и в MySQL, и в SQLite
+    // Список услуг + превью (cover)
     $sql = "
         SELECT s.*,
                (
@@ -47,7 +46,6 @@ if ($method === 'GET') {
     $stmt = $db->query($sql);
     $services = $stmt->fetchAll();
 
-    // Декодируем features
     foreach ($services as &$s) {
         $s['features'] = json_decode($s['features'], true) ?: [];
     }
@@ -68,33 +66,49 @@ switch ($method) {
     case 'POST':
         $data = json_decode(file_get_contents('php://input'), true) ?? [];
 
-        $stmt = $db->prepare('INSERT INTO services (name, description, features) VALUES (?,?,?)');
+        $stmt = $db->prepare('INSERT INTO services (name, description, features, model_path) VALUES (?,?,?,?)');
         $stmt->execute([
             $data['name'] ?? '',
             $data['description'] ?? '',
-            json_encode($data['features'] ?? [])
+            json_encode($data['features'] ?? []),
+            $data['model_path'] ?? null
         ]);
 
         $newId = (int)$db->lastInsertId();
         http_response_code(201);
         echo json_encode(['id' => $newId]);
         break;
-    case 'PUT':
-    case 'PATCH':
-        parse_str($_SERVER['QUERY_STRING'] ?? '', $q);
-        $id = (int)($q['id'] ?? 0);
-        if (!$id) { http_response_code(400); echo json_encode(['error'=>'bad_id']); exit; }
 
-        $data = json_decode(file_get_contents('php://input'), true) ?? [];
-        $stmt = $db->prepare('UPDATE services SET name = ?, description = ?, features = ? WHERE id = ?');
-        $stmt->execute([
-            $data['name'] ?? '',
-            $data['description'] ?? '',
-            json_encode($data['features'] ?? []),
-            $id
-        ]);
-        echo json_encode(['status'=>'ok']);
-        break;
+    case 'PUT':
+case 'PATCH':
+    parse_str($_SERVER['QUERY_STRING'] ?? '', $q);
+    $id = (int)($q['id'] ?? 0);
+    if (!$id) { http_response_code(400); echo json_encode(['error'=>'bad_id']); exit; }
+
+    $data = json_decode(file_get_contents('php://input'), true) ?? [];
+
+    // Базовые поля
+    $name        = $data['name'] ?? '';
+    $description = $data['description'] ?? '';
+    $features    = json_encode($data['features'] ?? []);
+
+    // Собираем SQL динамически — трогаем model_path только если поле есть в JSON
+    $sql = 'UPDATE services SET name = ?, description = ?, features = ?';
+    $params = [$name, $description, $features];
+
+    if (array_key_exists('model_path', $data)) {
+        $sql .= ', model_path = ?';
+        $params[] = ($data['model_path'] === '' ? null : $data['model_path']);
+    }
+
+    $sql .= ' WHERE id = ?';
+    $params[] = $id;
+
+    $stmt = $db->prepare($sql);
+    $stmt->execute($params);
+
+    echo json_encode(['status' => 'ok']);
+    break;
 
     case 'DELETE':
         $id = (int)($_GET['id'] ?? 0);
